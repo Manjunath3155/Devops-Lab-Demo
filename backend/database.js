@@ -23,7 +23,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     description TEXT,
-    status TEXT DEFAULT 'todo' CHECK(status IN ('todo', 'in_progress', 'review', 'done')),
+    status TEXT DEFAULT 'todo' CHECK(status IN ('todo', 'in_progress', 'done')),
     priority TEXT DEFAULT 'medium' CHECK(priority IN ('low', 'medium', 'high', 'critical')),
     assigned_to INTEGER REFERENCES users(id),
     created_by INTEGER REFERENCES users(id),

@@ -1,14 +1,72 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, useCallback, useRef } from 'react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import api from './utils/api';
 
-// Auth Context
+// ─── Auth Context ────────────────────────────────────────────────
 const AuthContext = createContext(null);
+export function useAuth() { return useContext(AuthContext); }
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+// ─── Icons (inline SVG, no external deps) ────────────────────────
+const Icons = {
+  logo: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+    </svg>
+  ),
+  dashboard: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+    </svg>
+  ),
+  board: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
+    </svg>
+  ),
+  builds: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
+    </svg>
+  ),
+  plus: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+  ),
+  trash: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+    </svg>
+  ),
+  close: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  ),
+  edit: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+    </svg>
+  ),
+  chevronDown: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+    </svg>
+  ),
+  play: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+    </svg>
+  ),
+  spinner: () => (
+    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  ),
+};
 
-// Pages
+// ─── Login Page ─────────────────────────────────────────────────
 function LoginPage({ onLogin }) {
   const [isRegister, setIsRegister] = useState(false);
   const [form, setForm] = useState({ username: '', email: '', password: '' });
@@ -19,14 +77,10 @@ function LoginPage({ onLogin }) {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      let data;
-      if (isRegister) {
-        data = await api.register(form.username, form.email, form.password);
-      } else {
-        data = await api.login(form.username, form.password);
-      }
+      const data = isRegister
+        ? await api.register(form.username, form.email, form.password)
+        : await api.login(form.username, form.password);
       api.setToken(data.token);
       onLogin(data.user);
     } catch (err) {
@@ -37,94 +91,164 @@ function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 w-full max-w-md border border-white/20 shadow-2xl">
+    <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center p-4">
+      <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-xl mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-indigo-600 rounded-lg mb-4 text-white">
+            <Icons.logo />
           </div>
-          <h1 className="text-3xl font-bold text-white">DevFlow</h1>
-          <p className="text-purple-200 mt-1">DevOps Pipeline Dashboard</p>
+          <h1 className="text-xl font-semibold text-zinc-100">DevFlow</h1>
+          <p className="text-zinc-500 text-sm mt-1">DevOps Pipeline Dashboard</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-purple-200 mb-1">Username</label>
-            <input
-              type="text"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white placeholder-purple-300/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-              placeholder="Enter your username"
-              required
-            />
-          </div>
-
-          {isRegister && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-purple-200 mb-1">Email</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5" htmlFor="username">Username</label>
               <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white placeholder-purple-300/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                placeholder="Enter your email"
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                placeholder="Enter username"
                 required
               />
             </div>
-          )}
 
-          <div>
-            <label className="block text-sm font-medium text-purple-200 mb-1">Password</label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white placeholder-purple-300/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-              placeholder="Enter your password"
-              required
-            />
-          </div>
+            {isRegister && (
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5" htmlFor="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                placeholder="Enter email"
+                required
+              />
+              </div>
+            )}
 
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-2.5 rounded-lg text-sm">
-              {error}
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5" htmlFor="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                placeholder="Enter password"
+                required
+              />
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/25"
-          >
-            {loading ? 'Please wait...' : isRegister ? 'Create Account' : 'Sign In'}
-          </button>
-        </form>
+            {error && (
+              <div className="bg-red-900/20 border border-red-800/30 text-red-400 px-3 py-2 rounded-lg text-xs">
+                {error}
+              </div>
+            )}
 
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => { setIsRegister(!isRegister); setError(''); }}
-            className="text-purple-300 hover:text-white text-sm transition-colors"
-          >
-            {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Register"}
-          </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-zinc-100 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? <span className="flex items-center justify-center gap-2"><Icons.spinner /> Please wait...</span>
+                : isRegister ? 'Create Account' : 'Sign In'}
+            </button>
+          </form>
+
+          <div className="mt-5 text-center">
+            <button
+              onClick={() => { setIsRegister(!isRegister); setError(''); }}
+              className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+            >
+              {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Register"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+// ─── Navbar ──────────────────────────────────────────────────────
+function Navbar({ user, onLogout, activePage, onNavigate }) {
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: Icons.dashboard },
+    { id: 'board', label: 'Board', icon: Icons.board },
+    { id: 'builds', label: 'Builds', icon: Icons.builds },
+  ];
+
+  return (
+    <header className="border-b border-zinc-800 bg-[#0a0a0b]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
+              <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center text-white">
+                <Icons.logo />
+              </div>
+              DevFlow
+            </div>
+
+            <nav className="flex items-center gap-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => onNavigate(tab.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    activePage === tab.id
+                      ? 'bg-zinc-800 text-zinc-100'
+                      : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                  }`}
+                >
+                  <tab.icon />
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-300 text-[10px] font-medium">
+                {user?.username?.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-zinc-300">{user?.username}</span>
+            </div>
+            <button
+              onClick={onLogout}
+              className="p-1.5 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded-md transition-colors"
+              title="Logout"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ─── Dashboard Page ─────────────────────────────────────────────
 function DashboardPage() {
   const [stats, setStats] = useState(null);
   const [recentBuilds, setRecentBuilds] = useState([]);
   const [recentTasks, setRecentTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
+  useEffect(() => { loadDashboard(); }, []);
 
   const loadDashboard = async () => {
     try {
@@ -134,8 +258,8 @@ function DashboardPage() {
         api.getTasks(),
       ]);
       setStats(statsData.stats);
-      setRecentBuilds(buildsData.builds.slice(0, 5));
-      setRecentTasks(tasksData.tasks.slice(0, 5));
+      setRecentBuilds(buildsData.builds?.slice(0, 5) || []);
+      setRecentTasks(tasksData.tasks?.slice(0, 5) || []);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
     } finally {
@@ -146,90 +270,60 @@ function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-600 border-t-zinc-300" />
       </div>
     );
   }
 
-  const statCards = [
-    {
-      label: 'Total Builds',
-      value: stats?.total || 0,
-      icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4',
-      color: 'from-blue-500 to-cyan-500',
-    },
-    {
-      label: 'Success Rate',
-      value: `${stats?.successRate || 0}%`,
-      icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-      color: 'from-green-500 to-emerald-500',
-    },
-    {
-      label: 'Tasks',
-      value: `${stats?.completedTasks || 0}/${stats?.totalTasks || 0}`,
-      icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
-      color: 'from-purple-500 to-pink-500',
-    },
-    {
-      label: 'Running',
-      value: stats?.running || 0,
-      icon: 'M13 10V3L4 14h7v7l9-11h-7z',
-      color: 'from-amber-500 to-orange-500',
-    },
+  const cards = [
+    { label: 'Total Builds', value: stats?.total || 0, change: `${stats?.successRate || 0}% success rate` },
+    { label: 'Tasks', value: `${stats?.completedTasks || 0}/${stats?.totalTasks || 0}`, change: 'completed' },
+    { label: 'Running', value: stats?.running || 0, change: 'active builds' },
+    { label: 'Success Rate', value: `${stats?.successRate || 0}%`, change: 'overall' },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-gray-400 mt-1">Overview of your DevOps pipeline</p>
+        <h1 className="text-lg font-semibold text-zinc-100">Dashboard</h1>
+        <p className="text-xs text-zinc-500 mt-0.5">Overview of your DevOps pipeline</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((card, i) => (
-          <div key={i} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5 hover:bg-white/10 transition-all duration-200">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">{card.label}</p>
-                <p className="text-3xl font-bold text-white mt-1">{card.value}</p>
-              </div>
-              <div className={`p-3 rounded-lg bg-gradient-to-br ${card.color} bg-opacity-20`}>
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d={card.icon} />
-                </svg>
-              </div>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map((card, i) => (
+          <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+            <p className="text-xs text-zinc-500">{card.label}</p>
+            <p className="text-2xl font-semibold text-zinc-100 mt-1">{card.value}</p>
+            <p className="text-[11px] text-zinc-600 mt-1">{card.change}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Builds */}
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5">
-          <h2 className="text-lg font-semibold text-white mb-4">Recent Builds</h2>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+          <h2 className="text-sm font-medium text-zinc-100 mb-3">Recent Builds</h2>
           {recentBuilds.length === 0 ? (
-            <p className="text-gray-500 text-sm">No builds yet. Trigger one from the Builds page!</p>
+            <p className="text-xs text-zinc-600">No builds yet. Trigger one from the Builds page!</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {recentBuilds.map((build) => (
-                <div key={build.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <span className={`w-2.5 h-2.5 rounded-full ${
-                      build.status === 'success' ? 'bg-green-500' :
+                <div key={build.id} className="flex items-center justify-between py-1.5">
+                  <div className="flex items-center gap-2.5">
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      build.status === 'success' ? 'bg-emerald-500' :
                       build.status === 'failed' ? 'bg-red-500' :
-                      build.status === 'running' ? 'bg-yellow-500 animate-pulse' :
-                      'bg-gray-500'
-                    }`}></span>
-                    <div>
-                      <p className="text-white text-sm font-medium">Build #{build.build_number}</p>
-                      <p className="text-gray-400 text-xs">{build.branch}</p>
-                    </div>
+                      build.status === 'running' ? 'bg-amber-500 animate-pulse' :
+                      'bg-zinc-600'
+                    }`} />
+                    <span className="text-xs text-zinc-300">Build #{build.build_number}</span>
+                    <span className="text-[11px] text-zinc-600">{build.branch}</span>
                   </div>
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                    build.status === 'success' ? 'bg-green-500/20 text-green-300' :
-                    build.status === 'failed' ? 'bg-red-500/20 text-red-300' :
-                    build.status === 'running' ? 'bg-yellow-500/20 text-yellow-300' :
-                    'bg-gray-500/20 text-gray-300'
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                    build.status === 'success' ? 'bg-emerald-900/30 text-emerald-400' :
+                    build.status === 'failed' ? 'bg-red-900/30 text-red-400' :
+                    build.status === 'running' ? 'bg-amber-900/30 text-amber-400' :
+                    'bg-zinc-800 text-zinc-500'
                   }`}>
                     {build.status}
                   </span>
@@ -240,23 +334,27 @@ function DashboardPage() {
         </div>
 
         {/* Recent Tasks */}
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5">
-          <h2 className="text-lg font-semibold text-white mb-4">Recent Tasks</h2>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+          <h2 className="text-sm font-medium text-zinc-100 mb-3">Recent Tasks</h2>
           {recentTasks.length === 0 ? (
-            <p className="text-gray-500 text-sm">No tasks yet. Create one from the Tasks page!</p>
+            <p className="text-xs text-zinc-600">No tasks yet. Create one from the Board page!</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {recentTasks.map((task) => (
-                <div key={task.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-medium truncate">{task.title}</p>
-                    <p className="text-gray-400 text-xs capitalize">{task.status.replace('_', ' ')}</p>
+                <div key={task.id} className="flex items-center justify-between py-1.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      task.status === 'done' ? 'bg-emerald-500' :
+                      task.status === 'in_progress' ? 'bg-blue-500' :
+                      'bg-zinc-600'
+                    }`} />
+                    <span className="text-xs text-zinc-300 truncate">{task.title}</span>
                   </div>
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ml-2 ${
-                    task.priority === 'critical' ? 'bg-red-500/20 text-red-300' :
-                    task.priority === 'high' ? 'bg-orange-500/20 text-orange-300' :
-                    task.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
-                    'bg-green-500/20 text-green-300'
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded flex-shrink-0 ml-2 ${
+                    task.priority === 'critical' ? 'bg-red-900/30 text-red-400' :
+                    task.priority === 'high' ? 'bg-orange-900/30 text-orange-400' :
+                    task.priority === 'medium' ? 'bg-amber-900/30 text-amber-400' :
+                    'bg-zinc-800 text-zinc-500'
                   }`}>
                     {task.priority}
                   </span>
@@ -270,21 +368,265 @@ function DashboardPage() {
   );
 }
 
-function TasksPage() {
+// ─── Task Detail Modal ───────────────────────────────────────────
+function TaskModal({ task, onClose, onSave, onDelete }) {
+  const [form, setForm] = useState({
+    title: task?.title || '',
+    description: task?.description || '',
+    priority: task?.priority || 'medium',
+    status: task?.status || 'todo',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!form.title.trim()) return;
+    setSaving(true);
+    try {
+      await onSave(task?.id, form);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Delete this task?')) return;
+    try {
+      await onDelete(task?.id);
+      onClose();
+    } catch (err) {
+      console.error('Failed to delete task:', err);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-lg mx-4 shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
+          <h2 className="text-sm font-medium text-zinc-100">
+            {task?.id ? 'Edit Task' : 'New Task'}
+          </h2>
+          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300 rounded transition-colors">
+            <Icons.close />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Title</label>
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              placeholder="Task title"
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Description</label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none h-24"
+              placeholder="Add a description..."
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Priority</label>
+              <select
+                value={form.priority}
+                onChange={(e) => setForm({ ...form, priority: e.target.value })}
+                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Status</label>
+              <select
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between px-5 py-4 border-t border-zinc-800">
+          {task?.id ? (
+            <button onClick={handleDelete} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-zinc-500 hover:text-red-400 rounded-md hover:bg-red-900/20 transition-colors">
+              <Icons.trash /> Delete
+            </button>
+          ) : <div />}
+          <div className="flex items-center gap-2">
+            <button onClick={onClose} className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-300 rounded-md hover:bg-zinc-800 transition-colors">
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving || !form.title.trim()}
+              className="px-4 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-zinc-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? 'Saving...' : task?.id ? 'Save' : 'Create'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Kanban Board Page ──────────────────────────────────────────
+const COLUMNS = [
+  { id: 'todo', title: 'To Do', color: 'bg-zinc-600' },
+  { id: 'in_progress', title: 'In Progress', color: 'bg-blue-500' },
+  { id: 'done', title: 'Done', color: 'bg-emerald-500' },
+];
+
+const PRIORITY_BADGES = {
+  critical: { label: 'Critical', class: 'bg-red-900/40 text-red-400' },
+  high: { label: 'High', class: 'bg-orange-900/40 text-orange-400' },
+  medium: { label: 'Medium', class: 'bg-amber-900/40 text-amber-400' },
+  low: { label: 'Low', class: 'bg-zinc-800 text-zinc-500' },
+};
+
+function BoardColumn({ column, tasks, onOpenTask, onAddTask }) {
+  const [newTitle, setNewTitle] = useState('');
+  const [showInput, setShowInput] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (showInput && inputRef.current) inputRef.current.focus();
+  }, [showInput]);
+
+  const handleAdd = () => {
+    if (newTitle.trim()) {
+      onAddTask(column.id, newTitle.trim());
+      setNewTitle('');
+      setShowInput(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') handleAdd();
+    if (e.key === 'Escape') { setShowInput(false); setNewTitle(''); }
+  };
+
+  return (
+    <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 flex flex-col flex-1 min-w-0" style={{ minHeight: 0 }}>
+      {/* Column Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${column.color}`} />
+          <h3 className="text-xs font-medium text-zinc-300">{column.title}</h3>
+          <span className="text-[11px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded">{tasks.length}</span>
+        </div>
+        <button
+          onClick={() => setShowInput(true)}
+          className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors"
+          title="Add task"
+        >
+          <Icons.plus />
+        </button>
+      </div>
+
+      {/* Add task input */}
+      {showInput && (
+        <div className="px-3 pt-3">
+          <input
+            ref={inputRef}
+            type="text"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={() => { if (!newTitle.trim()) { setShowInput(false); } }}
+            className="w-full px-2.5 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 text-xs placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+            placeholder="Task title, Enter to add"
+          />
+        </div>
+      )}
+
+      {/* Droppable area */}
+      <Droppable droppableId={column.id}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className={`flex-1 px-3 py-2 space-y-2 overflow-y-auto min-h-[120px] transition-colors ${
+              snapshot.isDraggingOver ? 'bg-indigo-900/10' : ''
+            }`}
+          >
+            {tasks.map((task, index) => (
+              <TaskCard key={task.id} task={task} index={index} onClick={() => onOpenTask(task)} />
+            ))}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+    </div>
+  );
+}
+
+function TaskCard({ task, index, onClick }) {
+  const badge = PRIORITY_BADGES[task.priority] || PRIORITY_BADGES.medium;
+
+  return (
+    <Draggable draggableId={`task-${task.id}`} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          onClick={onClick}
+          className={`bg-zinc-800 border border-zinc-700 rounded-lg p-3 cursor-pointer group transition-all ${
+            snapshot.isDragging
+              ? 'shadow-xl border-indigo-500/50 rotate-[3deg] scale-[1.02]'
+              : 'hover:border-zinc-600'
+          }`}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-xs text-zinc-200 leading-relaxed break-words flex-1">{task.title}</p>
+            <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded whitespace-nowrap flex-shrink-0 ${badge.class}`}>
+              {badge.label}
+            </span>
+          </div>
+          {task.description && (
+            <p className="text-[11px] text-zinc-500 mt-1.5 line-clamp-2">{task.description}</p>
+          )}
+          <div className="flex items-center gap-2 mt-2">
+            {task.assigned_username && (
+              <span className="text-[10px] text-zinc-600">@{task.assigned_username}</span>
+            )}
+          </div>
+        </div>
+      )}
+    </Draggable>
+  );
+}
+
+function BoardPage() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', priority: 'medium' });
-  const [filter, setFilter] = useState('all');
+  const [modalTask, setModalTask] = useState(null);
 
-  useEffect(() => { loadTasks(); }, [filter]);
+  useEffect(() => { loadTasks(); }, []);
 
   const loadTasks = async () => {
     try {
-      const filters = {};
-      if (filter !== 'all') filters.status = filter;
-      const data = await api.getTasks(filters);
-      setTasks(data.tasks);
+      const data = await api.getTasks();
+      setTasks(data.tasks || []);
     } catch (err) {
       console.error('Failed to load tasks:', err);
     } finally {
@@ -292,216 +634,141 @@ function TasksPage() {
     }
   };
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
+  const getColumnTasks = (columnId) => tasks.filter((t) => t.status === columnId);
+
+  const onDragEnd = async (result) => {
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+
+    const taskId = parseInt(draggableId.replace('task-', ''), 10);
+    const newStatus = destination.droppableId;
+
+    // Optimistic update
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+    );
+
     try {
-      await api.createTask(form);
-      setForm({ title: '', description: '', priority: 'medium' });
-      setShowForm(false);
+      await api.updateTask(taskId, { status: newStatus });
+    } catch (err) {
+      // Revert on failure
+      loadTasks();
+    }
+  };
+
+  const handleOpenTask = (task) => setModalTask(task);
+  const handleCloseModal = () => setModalTask(null);
+
+  const handleSaveTask = async (id, form) => {
+    if (id) {
+      await api.updateTask(id, form);
+    } else {
+      await api.createTask({ title: form.title, description: form.description, priority: form.priority, status: form.status });
+    }
+    await loadTasks();
+  };
+
+  const handleDeleteTask = async (id) => {
+    await api.deleteTask(id);
+    await loadTasks();
+  };
+
+  const handleAddTask = async (columnId, title) => {
+    try {
+      await api.createTask({ title, status: columnId, priority: 'medium' });
       loadTasks();
     } catch (err) {
       console.error('Failed to create task:', err);
     }
   };
 
-  const updateStatus = async (taskId, newStatus) => {
-    try {
-      await api.updateTask(taskId, { status: newStatus });
-      loadTasks();
-    } catch (err) {
-      console.error('Failed to update task:', err);
-    }
-  };
-
-  const deleteTask = async (taskId) => {
-    if (!confirm('Delete this task?')) return;
-    try {
-      await api.deleteTask(taskId);
-      loadTasks();
-    } catch (err) {
-      console.error('Failed to delete task:', err);
-    }
-  };
-
-  const statusColors = {
-    todo: 'bg-gray-500/20 text-gray-300',
-    in_progress: 'bg-blue-500/20 text-blue-300',
-    review: 'bg-yellow-500/20 text-yellow-300',
-    done: 'bg-green-500/20 text-green-300',
-  };
-
-  const priorityColors = {
-    low: 'border-l-green-500',
-    medium: 'border-l-yellow-500',
-    high: 'border-l-orange-500',
-    critical: 'border-l-red-500',
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-600 border-t-zinc-300" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-white">Tasks</h1>
-          <p className="text-gray-400 mt-1">Manage your project tasks</p>
+          <h1 className="text-lg font-semibold text-zinc-100">Board</h1>
+          <p className="text-xs text-zinc-500 mt-0.5">Drag and drop tasks to update status</p>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-medium rounded-lg transition-all duration-200 shadow-lg shadow-purple-500/25"
+          onClick={() => setModalTask({ id: null, title: '', description: '', priority: 'medium', status: 'todo' })}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-zinc-100 rounded-lg transition-colors"
         >
-          {showForm ? 'Cancel' : '+ New Task'}
+          <Icons.plus /> New Task
         </button>
       </div>
 
-      {showForm && (
-        <form onSubmit={handleCreate} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5 space-y-4">
-          <div>
-            <input
-              type="text"
-              placeholder="Task title"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              required
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="flex gap-4 flex-1 min-h-0">
+          {COLUMNS.map((col) => (
+            <BoardColumn
+              key={col.id}
+              column={col}
+              tasks={getColumnTasks(col.id)}
+              onOpenTask={handleOpenTask}
+              onAddTask={handleAddTask}
             />
-          </div>
-          <div>
-            <textarea
-              placeholder="Description (optional)"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none h-20"
-            />
-          </div>
-          <div className="flex items-center gap-4">
-            <select
-              value={form.priority}
-              onChange={(e) => setForm({ ...form, priority: e.target.value })}
-              className="px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
-            <button type="submit" className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors">
-              Create Task
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Filters */}
-      <div className="flex gap-2">
-        {['all', 'todo', 'in_progress', 'review', 'done'].map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilter(s)}
-            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-              filter === s
-                ? 'bg-purple-600 text-white'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            {s.replace('_', ' ').charAt(0).toUpperCase() + s.replace('_', ' ').slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {/* Task List */}
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-3 border-purple-500 border-t-transparent"></div>
-        </div>
-      ) : tasks.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <p>No tasks found</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {tasks.map((task) => (
-            <div
-              key={task.id}
-              className={`bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 border-l-4 ${priorityColors[task.priority]} hover:bg-white/10 transition-all duration-200`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-medium truncate">{task.title}</h3>
-                  {task.description && (
-                    <p className="text-gray-400 text-sm mt-1 line-clamp-2">{task.description}</p>
-                  )}
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[task.status] || ''}`}>
-                      {task.status.replace('_', ' ')}
-                    </span>
-                    {task.assigned_username && (
-                      <span className="text-xs text-gray-500">@{task.assigned_username}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 ml-4">
-                  {task.status !== 'done' && (
-                    <button
-                      onClick={() => updateStatus(task.id, task.status === 'todo' ? 'in_progress' : task.status === 'in_progress' ? 'review' : 'done')}
-                      className="p-1.5 text-gray-400 hover:text-green-400 transition-colors"
-                      title="Advance status"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </button>
-                  )}
-                  <button
-                    onClick={() => deleteTask(task.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
-                    title="Delete task"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
           ))}
         </div>
+      </DragDropContext>
+
+      {modalTask && (
+        <TaskModal
+          task={modalTask}
+          onClose={handleCloseModal}
+          onSave={handleSaveTask}
+          onDelete={handleDeleteTask}
+        />
       )}
     </div>
   );
 }
 
+// ─── Builds Page ─────────────────────────────────────────────────
 function BuildsPage() {
   const [builds, setBuilds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState(false);
   const [branch, setBranch] = useState('main');
   const [wsConnected, setWsConnected] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
     loadBuilds();
-    connectWebSocket();
+    const cleanup = connectWebSocket();
+    return cleanup;
   }, []);
 
   const connectWebSocket = () => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => setWsConnected(true);
-    ws.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      if (msg.type === 'BUILD_UPDATE') {
-        setBuilds((prev) => [msg.data, ...prev.filter(b => b.id !== msg.data.id)]);
-      }
-    };
-    ws.onclose = () => setWsConnected(false);
-
-    return () => ws.close();
+    let ws;
+    try {
+      ws = new WebSocket(wsUrl);
+      ws.onopen = () => setWsConnected(true);
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'BUILD_UPDATE') {
+          setBuilds((prev) => [msg.data, ...prev.filter(b => b.id !== msg.data.id)]);
+        }
+      };
+      ws.onclose = () => setWsConnected(false);
+    } catch {}
+    return () => ws?.close();
   };
 
   const loadBuilds = async () => {
     try {
       const data = await api.getBuilds();
-      setBuilds(data.builds);
+      setBuilds(data.builds || []);
     } catch (err) {
       console.error('Failed to load builds:', err);
     } finally {
@@ -522,25 +789,25 @@ function BuildsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Build Pipeline</h1>
-          <p className="text-gray-400 mt-1">CI/CD pipeline status and logs</p>
+          <h1 className="text-lg font-semibold text-zinc-100">Build Pipeline</h1>
+          <p className="text-xs text-zinc-500 mt-0.5">CI/CD pipeline status and logs</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-          <span className="text-xs text-gray-400">{wsConnected ? 'Live' : 'Disconnected'}</span>
+        <div className="flex items-center gap-1.5">
+          <span className={`w-1.5 h-1.5 rounded-full ${wsConnected ? 'bg-emerald-500' : 'bg-zinc-600'}`} />
+          <span className="text-[11px] text-zinc-500">{wsConnected ? 'Live' : 'Offline'}</span>
         </div>
       </div>
 
       {/* Trigger Build */}
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5">
-        <div className="flex items-center gap-3">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+        <div className="flex items-center gap-2.5">
           <select
             value={branch}
             onChange={(e) => setBranch(e.target.value)}
-            className="px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-1.5 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300 text-xs focus:outline-none focus:border-indigo-500"
           >
             <option value="main">main</option>
             <option value="develop">develop</option>
@@ -549,75 +816,73 @@ function BuildsPage() {
           <button
             onClick={triggerBuild}
             disabled={triggering}
-            className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/25 flex items-center gap-2"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-zinc-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {triggering ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                Triggering...
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Trigger Build
-              </>
-            )}
+            {triggering ? <Icons.spinner /> : <Icons.play />}
+            {triggering ? 'Triggering...' : 'Trigger Build'}
           </button>
         </div>
       </div>
 
-      {/* Build History */}
+      {/* Build List */}
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-3 border-purple-500 border-t-transparent"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-600 border-t-zinc-300" />
         </div>
       ) : builds.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <p>No builds yet. Trigger your first build!</p>
+        <div className="text-center py-12">
+          <p className="text-xs text-zinc-600">No builds yet. Trigger your first build!</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {builds.map((build) => (
-            <div key={build.id} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all duration-200">
-              <div className="flex items-center justify-between mb-2">
+            <div key={build.id} className="bg-zinc-900 border border-zinc-800 rounded-lg">
+              <button
+                onClick={() => setExpandedId(expandedId === build.id ? null : build.id)}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-zinc-800/50 transition-colors rounded-lg"
+              >
                 <div className="flex items-center gap-3">
-                  <span className={`w-3 h-3 rounded-full ${
-                    build.status === 'success' ? 'bg-green-500' :
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                    build.status === 'success' ? 'bg-emerald-500' :
                     build.status === 'failed' ? 'bg-red-500' :
-                    build.status === 'running' ? 'bg-yellow-500 animate-pulse' :
-                    'bg-gray-500'
-                  }`}></span>
-                  <span className="text-white font-medium">Build #{build.build_number}</span>
-                  <span className="text-gray-400 text-sm">on {build.branch}</span>
+                    build.status === 'running' ? 'bg-amber-500 animate-pulse' :
+                    'bg-zinc-600'
+                  }`} />
+                  <div className="text-left">
+                    <span className="text-sm text-zinc-200 font-medium">Build #{build.build_number}</span>
+                    <span className="text-xs text-zinc-600 ml-2">{build.branch}</span>
+                  </div>
                 </div>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                  build.status === 'success' ? 'bg-green-500/20 text-green-300' :
-                  build.status === 'failed' ? 'bg-red-500/20 text-red-300' :
-                  build.status === 'running' ? 'bg-yellow-500/20 text-yellow-300 animate-pulse' :
-                  'bg-gray-500/20 text-gray-300'
-                }`}>
-                  {build.status.charAt(0).toUpperCase() + build.status.slice(1)}
-                </span>
-              </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                    build.status === 'success' ? 'bg-emerald-900/30 text-emerald-400' :
+                    build.status === 'failed' ? 'bg-red-900/30 text-red-400' :
+                    build.status === 'running' ? 'bg-amber-900/30 text-amber-400 animate-pulse' :
+                    'bg-zinc-800 text-zinc-500'
+                  }`}>
+                    {build.status}
+                  </span>
+                  <Icons.chevronDown />
+                </div>
+              </button>
 
-              {build.commit_message && (
-                <p className="text-gray-400 text-sm ml-6 mb-2">{build.commit_message}</p>
-              )}
-
-              {build.logs && (
-                <div className="ml-6 mt-2 bg-black/40 rounded-lg p-3 font-mono text-xs text-gray-400 overflow-x-auto">
-                  <pre className="whitespace-pre-wrap">{build.logs}</pre>
+              {expandedId === build.id && (
+                <div className="px-4 pb-4 space-y-2 border-t border-zinc-800 pt-3">
+                  {build.commit_message && (
+                    <p className="text-xs text-zinc-400">{build.commit_message}</p>
+                  )}
+                  {build.logs && (
+                    <div className="bg-zinc-950 rounded-lg p-3 font-mono text-[11px] text-zinc-500 overflow-x-auto max-h-48 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap">{build.logs}</pre>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-4 text-[10px] text-zinc-600">
+                    {build.triggered_username && <span>By: {build.triggered_username}</span>}
+                    {build.started_at && <span>Start: {new Date(build.started_at).toLocaleString()}</span>}
+                    {build.finished_at && <span>End: {new Date(build.finished_at).toLocaleString()}</span>}
+                  </div>
                 </div>
               )}
-
-              <div className="flex items-center gap-4 ml-6 mt-2 text-xs text-gray-500">
-                {build.triggered_username && <span>Triggered by: {build.triggered_username}</span>}
-                {build.started_at && <span>Started: {new Date(build.started_at).toLocaleString()}</span>}
-                {build.finished_at && <span>Finished: {new Date(build.finished_at).toLocaleString()}</span>}
-              </div>
             </div>
           ))}
         </div>
@@ -626,70 +891,7 @@ function BuildsPage() {
   );
 }
 
-function Navbar({ user, onLogout, activePage, onNavigate }) {
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-    { id: 'tasks', label: 'Tasks', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
-    { id: 'builds', label: 'Builds', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-  ];
-
-  return (
-    <nav className="bg-white/5 backdrop-blur-md border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <span className="text-white font-bold text-lg">DevFlow</span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => onNavigate(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    activePage === tab.id
-                      ? 'bg-purple-600/30 text-purple-200 border border-purple-500/30'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d={tab.icon} />
-                  </svg>
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">
-                {user?.username?.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-white">{user?.username}</span>
-            </div>
-            <button
-              onClick={onLogout}
-              className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-              title="Logout"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
+// ─── App Shell ───────────────────────────────────────────────────
 export default function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState('dashboard');
@@ -697,35 +899,22 @@ export default function App() {
   useEffect(() => {
     const token = localStorage.getItem('devflow_token');
     if (token) {
-      api.getMe().then((data) => setUser(data.user)).catch(() => {
-        api.setToken(null);
-      });
+      api.getMe().then((data) => setUser(data.user)).catch(() => api.setToken(null));
     }
   }, []);
 
-  const handleLogin = (userData) => {
-    setUser(userData);
-  };
+  const handleLogin = (userData) => setUser(userData);
+  const handleLogout = () => { api.setToken(null); setUser(null); };
 
-  const handleLogout = () => {
-    api.setToken(null);
-    setUser(null);
-  };
-
-  if (!user) {
-    return <LoginPage onLogin={handleLogin} />;
-  }
+  if (!user) return <LoginPage onLogin={handleLogin} />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-[#0a0a0b] flex flex-col">
       <Navbar user={user} onLogout={handleLogout} activePage={page} onNavigate={setPage} />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {{
-          dashboard: <DashboardPage />,
-          tasks: <TasksPage />,
-          builds: <BuildsPage />,
-        }[page] || <DashboardPage />}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 min-h-0">
+        {page === 'dashboard' && <DashboardPage />}
+        {page === 'board' && <BoardPage />}
+        {page === 'builds' && <BuildsPage />}
       </main>
     </div>
   );

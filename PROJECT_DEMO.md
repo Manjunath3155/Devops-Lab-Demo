@@ -27,10 +27,16 @@ Run these commands **before** going into the demo room:
 - Open Docker Desktop from Start Menu
 - Wait for the Docker engine to start (whale icon stops animating)
 - **If Docker is not in PATH:**
-  ```powershell
-  # Run this in PowerShell to add Docker to PATH for current session
-  $env:Path += ";C:\Program Files\Docker\Docker\resources"
-  ```
+  - **If using Git Bash:**
+    ```bash
+    source ./docker_setup.sh
+    # Or manually:
+    export PATH="$PATH:/c/Program Files/Docker/Docker/resources/bin"
+    ```
+  - **If using PowerShell:**
+    ```powershell
+    $env:Path += ";C:\Program Files\Docker\Docker\resources"
+    ```
   Or find the full path:
   ```powershell
   where.exe docker
@@ -406,7 +412,8 @@ Devops lab demo/
 
 | Issue | Solution |
 |-------|----------|
-| Docker not found | Run `$env:Path += ";C:\Program Files\Docker\Docker\resources"` |
+| Docker not found | Git Bash: `source docker_setup.sh` or `export PATH="$PATH:/c/Program Files/Docker/Docker/resources/bin"`
+PowerShell: `$env:Path += ";C:\Program Files\Docker\Docker\resources"` |
 | Port already in use | Change port in `server.js` or `vite.config.js` |
 | Jenkins won't start | Check Java: `java -version` (needs Java 11+) |
 | SQLite errors | Delete `backend/devflow.db` and restart backend |
