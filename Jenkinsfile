@@ -15,11 +15,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/your-username/devflow.git',
-                    credentialsId: 'github-credentials'
-                
-                echo "Checked out branch: ${env.BRANCH_NAME}"
+                echo "Code already checked out from Git Branch: ${env.BRANCH_NAME}"
+                echo "Workspace: ${env.WORKSPACE}"
             }
         }
 
