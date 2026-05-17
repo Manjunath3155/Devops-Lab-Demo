@@ -1,0 +1,20 @@
+{
+  "name": "devflow-backend",
+  "version": "1.0.0",
+  "description": "DevFlow Backend - DevOps Dashboard API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test tests/"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "ws": "^8.18.0",
+    "uuid": "^10.0.0"
+  }
+}
