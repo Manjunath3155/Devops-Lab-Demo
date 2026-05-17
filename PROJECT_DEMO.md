@@ -58,11 +58,19 @@ npm run dev
 ```
 Keep this terminal open. Frontend will run at `http://localhost:5173`
 
-### 4. Start Jenkins (New Terminal)
-```powershell
-java -jar "C:\ProgramData\Jenkins\jenkins.war" --httpPort=8080
-```
-Jenkins will be available at `http://localhost:8080`
+### 4. Start Jenkins
+**Jenkins runs as a Windows service and starts automatically.**
+- If needed, manually start the service:
+  ```powershell
+  sc start jenkins
+  ```
+- Jenkins is available at `http://localhost:8080`
+- Login: `manjunathpatil` / `Manjunath1234`
+- Pipeline job: **DevFlow-Pipeline** (already created)
+- To trigger a build from CLI:
+  ```bash
+  java -jar jenkins-cli.jar -s http://localhost:8080 -auth "manjunathpatil:Manjunath1234" build DevFlow-Pipeline
+  ```
 
 ---
 
