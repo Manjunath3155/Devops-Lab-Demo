@@ -91,20 +91,20 @@ function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-10 h-10 bg-indigo-600 rounded-lg mb-4 text-white">
             <Icons.logo />
           </div>
-          <h1 className="text-xl font-semibold text-zinc-100">DevFlow</h1>
-          <p className="text-zinc-500 text-sm mt-1">DevOps Pipeline Dashboard</p>
+          <h1 className="text-xl font-semibold text-gray-900">DevFlow</h1>
+          <p className="text-gray-500 text-sm mt-1">DevOps Pipeline Dashboard</p>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5" htmlFor="username">Username</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5" htmlFor="username">Username</label>
               <input
                 id="username"
                 name="username"
@@ -112,7 +112,7 @@ function LoginPage({ onLogin }) {
                 autoComplete="username"
                 value={form.username}
                 onChange={(e) => setForm({ ...form, username: e.target.value })}
-                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                 placeholder="Enter username"
                 required
               />
@@ -120,7 +120,7 @@ function LoginPage({ onLogin }) {
 
             {isRegister && (
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5" htmlFor="email">Email</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5" htmlFor="email">Email</label>
               <input
                 id="email"
                 name="email"
@@ -128,7 +128,7 @@ function LoginPage({ onLogin }) {
                 autoComplete="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                 placeholder="Enter email"
                 required
               />
@@ -136,7 +136,7 @@ function LoginPage({ onLogin }) {
             )}
 
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5" htmlFor="password">Password</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5" htmlFor="password">Password</label>
               <input
                 id="password"
                 name="password"
@@ -144,14 +144,14 @@ function LoginPage({ onLogin }) {
                 autoComplete="current-password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                 placeholder="Enter password"
                 required
               />
             </div>
 
             {error && (
-              <div className="bg-red-900/20 border border-red-800/30 text-red-400 px-3 py-2 rounded-lg text-xs">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-xs">
                 {error}
               </div>
             )}
@@ -159,7 +159,7 @@ function LoginPage({ onLogin }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-zinc-100 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? <span className="flex items-center justify-center gap-2"><Icons.spinner /> Please wait...</span>
                 : isRegister ? 'Create Account' : 'Sign In'}
@@ -169,7 +169,7 @@ function LoginPage({ onLogin }) {
           <div className="mt-5 text-center">
             <button
               onClick={() => { setIsRegister(!isRegister); setError(''); }}
-              className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
             >
               {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Register"}
             </button>
@@ -189,11 +189,11 @@ function Navbar({ user, onLogout, activePage, onNavigate }) {
   ];
 
   return (
-    <header className="border-b border-zinc-800 bg-[#0a0a0b]">
+    <header className="border-b border-gray-200 bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
+            <div className="flex items-center gap-2 text-gray-900 font-semibold text-sm">
               <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center text-white">
                 <Icons.logo />
               </div>
@@ -207,8 +207,8 @@ function Navbar({ user, onLogout, activePage, onNavigate }) {
                   onClick={() => onNavigate(tab.id)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                     activePage === tab.id
-                      ? 'bg-zinc-800 text-zinc-100'
-                      : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                      ? 'bg-gray-100 text-gray-900'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   <tab.icon />
@@ -219,15 +219,15 @@ function Navbar({ user, onLogout, activePage, onNavigate }) {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-xs text-zinc-400">
-              <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-300 text-[10px] font-medium">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 text-[10px] font-medium">
                 {user?.username?.charAt(0).toUpperCase()}
               </div>
-              <span className="text-zinc-300">{user?.username}</span>
+              <span className="text-gray-700">{user?.username}</span>
             </div>
             <button
               onClick={onLogout}
-              className="p-1.5 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded-md transition-colors"
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
               title="Logout"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
@@ -242,11 +242,12 @@ function Navbar({ user, onLogout, activePage, onNavigate }) {
 }
 
 // ─── Dashboard Page ─────────────────────────────────────────────
-function DashboardPage() {
+function DashboardPage({ onNavigate }) {
   const [stats, setStats] = useState(null);
-  const [recentBuilds, setRecentBuilds] = useState([]);
-  const [recentTasks, setRecentTasks] = useState([]);
+  const [builds, setBuilds] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => { loadDashboard(); }, []);
 
@@ -258,8 +259,8 @@ function DashboardPage() {
         api.getTasks(),
       ]);
       setStats(statsData.stats);
-      setRecentBuilds(buildsData.builds?.slice(0, 5) || []);
-      setRecentTasks(tasksData.tasks?.slice(0, 5) || []);
+      setBuilds(buildsData.builds || []);
+      setTasks(tasksData.tasks || []);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
     } finally {
@@ -267,65 +268,302 @@ function DashboardPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadDashboard();
+    setRefreshing(false);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-600 border-t-zinc-300" />
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-indigo-500" />
       </div>
     );
   }
 
+  const totalBuilds = stats?.total || 0;
+  const successCount = stats?.success || 0;
+  const failedCount = stats?.failed || 0;
+  const runningCount = stats?.running || 0;
+  const successRate = stats?.successRate || 0;
+  const totalTasks = stats?.totalTasks || 0;
+  const completedTasks = stats?.completedTasks || 0;
+
+  // Task distribution by status
+  const todoTasks = tasks.filter(t => t.status === 'todo').length;
+  const inProgressTasks = tasks.filter(t => t.status === 'in_progress').length;
+  const doneTasks = tasks.filter(t => t.status === 'done').length;
+  const taskTotal = todoTasks + inProgressTasks + doneTasks || 1;
+
+  // Build by branch
+  const branchMap = {};
+  builds.forEach(b => {
+    if (!branchMap[b.branch]) branchMap[b.branch] = { branch: b.branch, total: 0, success: 0, failed: 0 };
+    branchMap[b.branch].total++;
+    if (b.status === 'success') branchMap[b.branch].success++;
+    if (b.status === 'failed') branchMap[b.branch].failed++;
+  });
+  const branches = Object.values(branchMap);
+
+  // Build activity feed - combine builds and tasks chronologically
+  const buildItems = builds.map(b => ({
+    id: `b-${b.id}`,
+    type: 'build',
+    timestamp: new Date(b.created_at || b.started_at || Date.now()),
+    build_number: b.build_number,
+    branch: b.branch,
+    status: b.status,
+  }));
+  const taskItems = tasks.map(t => ({
+    id: `t-${t.id}`,
+    type: 'task',
+    timestamp: new Date(t.created_at || Date.now()),
+    title: t.title,
+    priority: t.priority,
+    status: t.status,
+  }));
+  const activity = [...buildItems, ...taskItems]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 6);
+
+  // Recent items for direct display
+  const recentBuilds = [...builds]
+    .sort((a, b) => new Date(b.created_at || b.started_at || 0) - new Date(a.created_at || a.started_at || 0))
+    .slice(0, 4);
+  const recentTasks = [...tasks]
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+    .slice(0, 5);
+
   const cards = [
-    { label: 'Total Builds', value: stats?.total || 0, change: `${stats?.successRate || 0}% success rate` },
-    { label: 'Tasks', value: `${stats?.completedTasks || 0}/${stats?.totalTasks || 0}`, change: 'completed' },
-    { label: 'Running', value: stats?.running || 0, change: 'active builds' },
-    { label: 'Success Rate', value: `${stats?.successRate || 0}%`, change: 'overall' },
+    { label: 'Total Builds', value: totalBuilds, change: `${successRate}% success rate`, accent: totalBuilds > 0 ? 'text-indigo-600' : 'text-gray-400', icon: 'builds' },
+    { label: 'Tasks', value: `${completedTasks}/${totalTasks}`, change: 'completed', accent: totalTasks > 0 ? 'text-emerald-600' : 'text-gray-400', icon: 'board' },
+    { label: 'Running', value: runningCount, change: 'active builds', accent: runningCount > 0 ? 'text-amber-600' : 'text-gray-400', icon: 'play' },
+    { label: 'Success Rate', value: `${successRate}%`, change: 'overall', accent: successRate >= 80 ? 'text-emerald-600' : successRate >= 50 ? 'text-amber-600' : 'text-gray-400', icon: 'logo' },
   ];
 
+  const buildTotalForBar = successCount + failedCount;
+  const successPct = buildTotalForBar > 0 ? (successCount / buildTotalForBar) * 100 : 0;
+  const failedPct = buildTotalForBar > 0 ? (failedCount / buildTotalForBar) * 100 : 0;
+
+  const timeAgo = (date) => {
+    const ts = date.getTime();
+    if (isNaN(ts)) return '';
+    const now = Date.now();
+    const diff = now - ts;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  const statusDot = (status) => {
+    if (status === 'success') return 'bg-emerald-500';
+    if (status === 'failed') return 'bg-red-500';
+    if (status === 'running') return 'bg-amber-500 animate-pulse';
+    if (status === 'in_progress') return 'bg-blue-500';
+    if (status === 'done') return 'bg-emerald-500';
+    return 'bg-gray-400';
+  };
+
+  const statusBg = (status) => {
+    if (status === 'success') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (status === 'failed') return 'bg-red-50 text-red-700 border-red-200';
+    if (status === 'running') return 'bg-amber-50 text-amber-700 border-amber-200';
+    if (status === 'in_progress') return 'bg-blue-50 text-blue-700 border-blue-200';
+    if (status === 'done') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    return 'bg-gray-100 text-gray-500 border-gray-200';
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold text-zinc-100">Dashboard</h1>
-        <p className="text-xs text-zinc-500 mt-0.5">Overview of your DevOps pipeline</p>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
+          <p className="text-xs text-gray-500 mt-0.5">Overview of your DevOps pipeline</p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-800 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 shadow-sm"
+          title="Refresh dashboard"
+        >
+          {refreshing ? <Icons.spinner /> : (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
+            </svg>
+          )}
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
       </div>
 
+      {/* Quick Actions */}
+      <div className="bg-white border border-gray-200 rounded-lg p-3 px-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <span className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Quick Actions</span>
+          <div className="h-4 w-px bg-gray-200" />
+          <button
+            onClick={() => onNavigate('board')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            <Icons.plus /> New Task
+          </button>
+          <button
+            onClick={() => onNavigate('builds')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            <Icons.play /> Trigger Build
+          </button>
+        </div>
+      </div>
+
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {cards.map((card, i) => (
-          <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-            <p className="text-xs text-zinc-500">{card.label}</p>
-            <p className="text-2xl font-semibold text-zinc-100 mt-1">{card.value}</p>
-            <p className="text-[11px] text-zinc-600 mt-1">{card.change}</p>
+          <div key={i} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm transition-all hover:border-gray-300 hover:-translate-y-0.5 hover:shadow-md duration-200">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-500">{card.label}</p>
+              <span className="text-gray-400 opacity-50">
+                {card.icon === 'builds' ? <Icons.builds /> :
+                 card.icon === 'board' ? <Icons.board /> :
+                 card.icon === 'play' ? <Icons.play /> : <Icons.logo />}
+              </span>
+            </div>
+            <p className={`text-2xl font-semibold mt-1 ${card.accent}`}>{card.value}</p>
+            <p className="text-[11px] text-gray-400 mt-1">{card.change}</p>
           </div>
         ))}
       </div>
 
+      {/* Recent Builds - visual cards */}
+      <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-medium text-gray-900">Recent Builds</h2>
+          <button onClick={() => onNavigate('builds')} className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">View all</button>
+        </div>
+        {recentBuilds.length === 0 ? (
+          <p className="text-xs text-gray-500 py-2">No builds yet. Trigger your first build!</p>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {recentBuilds.map((b) => (
+              <div key={b.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:border-gray-300 hover:shadow-sm transition-all">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-gray-700 font-medium">#{b.build_number}</span>
+                  <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded border ${statusBg(b.status)}`}>
+                    {b.status}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">{b.branch}</span>
+                  <span className="text-[10px] text-gray-400 ml-auto">
+                    {timeAgo(new Date(b.created_at || b.started_at || Date.now()))}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Build Pipeline + Task Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Recent Builds */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-          <h2 className="text-sm font-medium text-zinc-100 mb-3">Recent Builds</h2>
-          {recentBuilds.length === 0 ? (
-            <p className="text-xs text-zinc-600">No builds yet. Trigger one from the Builds page!</p>
+        {/* Build Pipeline Overview */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <h2 className="text-sm font-medium text-gray-900 mb-3">Build Pipeline</h2>
+          {buildTotalForBar === 0 && runningCount === 0 ? (
+            <p className="text-xs text-gray-500 py-3">No builds yet. Trigger one to see pipeline health.</p>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 text-[11px] mb-3">
+                <span className="flex items-center gap-1.5 text-gray-600">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  {successCount} passed
+                </span>
+                <span className="flex items-center gap-1.5 text-gray-600">
+                  <span className="w-2 h-2 rounded-full bg-red-500" />
+                  {failedCount} failed
+                </span>
+                {runningCount > 0 && (
+                  <span className="flex items-center gap-1.5 text-gray-600">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    {runningCount} running
+                  </span>
+                )}
+              </div>
+              <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden flex">
+                {successCount > 0 && (
+                  <div className="bg-emerald-500 h-full transition-all duration-700 rounded-l-full" style={{ width: `${successPct}%` }} />
+                )}
+                {failedCount > 0 && (
+                  <div className="bg-red-500 h-full transition-all duration-700 rounded-r-full" style={{ width: `${failedPct}%` }} />
+                )}
+              </div>
+              <div className="flex justify-between text-[10px] text-gray-400 mt-2">
+                <span>{successRate}% success rate</span>
+                <span>{buildTotalForBar} total</span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Task Status Distribution */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <h2 className="text-sm font-medium text-gray-900 mb-3">Tasks Overview</h2>
+          {tasks.length === 0 ? (
+            <p className="text-xs text-gray-500 py-3">No tasks yet. Create one from the Board page.</p>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 text-[11px] mb-3">
+                <span className="flex items-center gap-1.5 text-gray-600"><span className="w-2 h-2 rounded-full bg-gray-400" /> {todoTasks} to do</span>
+                <span className="flex items-center gap-1.5 text-gray-600"><span className="w-2 h-2 rounded-full bg-blue-500" /> {inProgressTasks} in progress</span>
+                <span className="flex items-center gap-1.5 text-gray-600"><span className="w-2 h-2 rounded-full bg-emerald-500" /> {doneTasks} done</span>
+              </div>
+              <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden flex">
+                {todoTasks > 0 && (
+                  <div className="bg-gray-400 h-full transition-all duration-700 rounded-l-full" style={{ width: `${(todoTasks / taskTotal) * 100}%` }} />
+                )}
+                {inProgressTasks > 0 && (
+                  <div className="bg-blue-500 h-full transition-all duration-700" style={{ width: `${(inProgressTasks / taskTotal) * 100}%` }} />
+                )}
+                {doneTasks > 0 && (
+                  <div className="bg-emerald-500 h-full transition-all duration-700 rounded-r-full" style={{ width: `${(doneTasks / taskTotal) * 100}%` }} />
+                )}
+              </div>
+              <div className="flex justify-between text-[10px] text-gray-400 mt-2">
+                <span>{tasks.length} total tasks</span>
+                <span>{completedTasks} completed</span>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Recent Tasks + Activity + Branches */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Recent Tasks */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-medium text-gray-900">Recent Tasks</h2>
+            <button onClick={() => onNavigate('board')} className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">View all</button>
+          </div>
+          {recentTasks.length === 0 ? (
+            <p className="text-xs text-gray-500 py-3">No tasks yet. Create one!</p>
           ) : (
             <div className="space-y-2">
-              {recentBuilds.map((build) => (
-                <div key={build.id} className="flex items-center justify-between py-1.5">
-                  <div className="flex items-center gap-2.5">
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                      build.status === 'success' ? 'bg-emerald-500' :
-                      build.status === 'failed' ? 'bg-red-500' :
-                      build.status === 'running' ? 'bg-amber-500 animate-pulse' :
-                      'bg-zinc-600'
-                    }`} />
-                    <span className="text-xs text-zinc-300">Build #{build.build_number}</span>
-                    <span className="text-[11px] text-zinc-600">{build.branch}</span>
-                  </div>
-                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                    build.status === 'success' ? 'bg-emerald-900/30 text-emerald-400' :
-                    build.status === 'failed' ? 'bg-red-900/30 text-red-400' :
-                    build.status === 'running' ? 'bg-amber-900/30 text-amber-400' :
-                    'bg-zinc-800 text-zinc-500'
+              {recentTasks.map((t) => (
+                <div key={t.id} className="flex items-center gap-2.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 hover:border-gray-300 transition-colors">
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot(t.status)}`} />
+                  <span className="text-xs text-gray-700 truncate flex-1">{t.title}</span>
+                  <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${
+                    t.priority === 'critical' ? 'bg-red-50 text-red-700' :
+                    t.priority === 'high' ? 'bg-orange-50 text-orange-700' :
+                    t.priority === 'medium' ? 'bg-amber-50 text-amber-700' :
+                    'bg-gray-100 text-gray-500'
                   }`}>
-                    {build.status}
+                    {t.priority}
                   </span>
                 </div>
               ))}
@@ -333,31 +571,63 @@ function DashboardPage() {
           )}
         </div>
 
-        {/* Recent Tasks */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-          <h2 className="text-sm font-medium text-zinc-100 mb-3">Recent Tasks</h2>
-          {recentTasks.length === 0 ? (
-            <p className="text-xs text-zinc-600">No tasks yet. Create one from the Board page!</p>
+        {/* Activity Timeline */}
+        <div className="lg:col-span-1 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <h2 className="text-sm font-medium text-gray-900 mb-3">Recent Activity</h2>
+          {activity.length === 0 ? (
+            <p className="text-xs text-gray-500 py-3">No activity yet.</p>
           ) : (
-            <div className="space-y-2">
-              {recentTasks.map((task) => (
-                <div key={task.id} className="flex items-center justify-between py-1.5">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                      task.status === 'done' ? 'bg-emerald-500' :
-                      task.status === 'in_progress' ? 'bg-blue-500' :
-                      'bg-zinc-600'
+            <div className="space-y-0">
+              {activity.map((item, idx) => (
+                <div key={item.id} className="flex gap-2.5">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-2 h-2 rounded-full mt-1.5 ring-2 ring-gray-200 ${
+                      item.type === 'build'
+                        ? item.status === 'success' ? 'bg-emerald-500' : item.status === 'failed' ? 'bg-red-500' : item.status === 'running' ? 'bg-amber-500' : 'bg-gray-400'
+                        : item.status === 'done' ? 'bg-emerald-500' : item.status === 'in_progress' ? 'bg-blue-500' : 'bg-gray-400'
                     }`} />
-                    <span className="text-xs text-zinc-300 truncate">{task.title}</span>
+                    {idx < activity.length - 1 && <div className="w-px flex-1 bg-gray-200 my-0.5" />}
                   </div>
-                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded flex-shrink-0 ml-2 ${
-                    task.priority === 'critical' ? 'bg-red-900/30 text-red-400' :
-                    task.priority === 'high' ? 'bg-orange-900/30 text-orange-400' :
-                    task.priority === 'medium' ? 'bg-amber-900/30 text-amber-400' :
-                    'bg-zinc-800 text-zinc-500'
-                  }`}>
-                    {task.priority}
-                  </span>
+                  <div className="pb-3 flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] text-gray-700 truncate">
+                        {item.type === 'build' ? `Build #${item.build_number}` : item.title}
+                      </span>
+                      <span className="text-[9px] text-gray-400 flex-shrink-0">
+                        {timeAgo(item.timestamp)}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-gray-500">
+                      {item.type === 'build' ? `${item.branch} — ${item.status}` : item.status.replace('_', ' ')}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Branch Summary */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <h2 className="text-sm font-medium text-gray-900 mb-3">Branches</h2>
+          {branches.length === 0 ? (
+            <p className="text-xs text-gray-500 py-3">No branches with builds yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {branches.map((b) => (
+                <div key={b.branch}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-700 font-medium">{b.branch}</span>
+                    <span className="text-[10px] text-gray-400">{b.total} builds</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden flex">
+                    {b.success > 0 && (
+                      <div className="bg-emerald-500 h-full" style={{ width: `${(b.success / b.total) * 100}%` }} />
+                    )}
+                    {b.failed > 0 && (
+                      <div className="bg-red-500 h-full" style={{ width: `${(b.failed / b.total) * 100}%` }} />
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -401,47 +671,47 @@ function TaskModal({ task, onClose, onSave, onDelete }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-lg mx-4 shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
-          <h2 className="text-sm font-medium text-zinc-100">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="relative bg-white border border-gray-200 rounded-xl w-full max-w-lg mx-4 shadow-xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+          <h2 className="text-sm font-medium text-gray-900">
             {task?.id ? 'Edit Task' : 'New Task'}
           </h2>
-          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300 rounded transition-colors">
+          <button onClick={onClose} className="p-1 text-gray-500 hover:text-gray-700 rounded transition-colors">
             <Icons.close />
           </button>
         </div>
 
         <div className="p-5 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Title</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Title</label>
             <input
               type="text"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
               placeholder="Task title"
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Description</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Description</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none h-24"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none h-24"
               placeholder="Add a description..."
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Priority</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Priority</label>
               <select
                 value={form.priority}
                 onChange={(e) => setForm({ ...form, priority: e.target.value })}
-                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -450,11 +720,11 @@ function TaskModal({ task, onClose, onSave, onDelete }) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Status</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Status</label>
               <select
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-100 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
               >
                 <option value="todo">To Do</option>
                 <option value="in_progress">In Progress</option>
@@ -464,20 +734,20 @@ function TaskModal({ task, onClose, onSave, onDelete }) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between px-5 py-4 border-t border-zinc-800">
+        <div className="flex items-center justify-between px-5 py-4 border-t border-gray-200">
           {task?.id ? (
-            <button onClick={handleDelete} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-zinc-500 hover:text-red-400 rounded-md hover:bg-red-900/20 transition-colors">
+            <button onClick={handleDelete} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors">
               <Icons.trash /> Delete
             </button>
           ) : <div />}
           <div className="flex items-center gap-2">
-            <button onClick={onClose} className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-300 rounded-md hover:bg-zinc-800 transition-colors">
+            <button onClick={onClose} className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={saving || !form.title.trim()}
-              className="px-4 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-zinc-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : task?.id ? 'Save' : 'Create'}
             </button>
@@ -490,16 +760,16 @@ function TaskModal({ task, onClose, onSave, onDelete }) {
 
 // ─── Kanban Board Page ──────────────────────────────────────────
 const COLUMNS = [
-  { id: 'todo', title: 'To Do', color: 'bg-zinc-600' },
+  { id: 'todo', title: 'To Do', color: 'bg-gray-400' },
   { id: 'in_progress', title: 'In Progress', color: 'bg-blue-500' },
   { id: 'done', title: 'Done', color: 'bg-emerald-500' },
 ];
 
 const PRIORITY_BADGES = {
-  critical: { label: 'Critical', class: 'bg-red-900/40 text-red-400' },
-  high: { label: 'High', class: 'bg-orange-900/40 text-orange-400' },
-  medium: { label: 'Medium', class: 'bg-amber-900/40 text-amber-400' },
-  low: { label: 'Low', class: 'bg-zinc-800 text-zinc-500' },
+  critical: { label: 'Critical', class: 'bg-red-50 text-red-700' },
+  high: { label: 'High', class: 'bg-orange-50 text-orange-800' },
+  medium: { label: 'Medium', class: 'bg-amber-50 text-amber-700' },
+  low: { label: 'Low', class: 'bg-gray-100 text-gray-500' },
 };
 
 function BoardColumn({ column, tasks, onOpenTask, onAddTask }) {
@@ -525,17 +795,17 @@ function BoardColumn({ column, tasks, onOpenTask, onAddTask }) {
   };
 
   return (
-    <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 flex flex-col flex-1 min-w-0" style={{ minHeight: 0 }}>
+    <div className="bg-gray-50/80 rounded-xl border border-gray-200 flex flex-col flex-1 min-w-0" style={{ minHeight: 0 }}>
       {/* Column Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${column.color}`} />
-          <h3 className="text-xs font-medium text-zinc-300">{column.title}</h3>
-          <span className="text-[11px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded">{tasks.length}</span>
+          <h3 className="text-xs font-medium text-gray-700">{column.title}</h3>
+          <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{tasks.length}</span>
         </div>
         <button
           onClick={() => setShowInput(true)}
-          className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors"
+          className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
           title="Add task"
         >
           <Icons.plus />
@@ -552,7 +822,7 @@ function BoardColumn({ column, tasks, onOpenTask, onAddTask }) {
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={() => { if (!newTitle.trim()) { setShowInput(false); } }}
-            className="w-full px-2.5 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 text-xs placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+            className="w-full px-2.5 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-xs placeholder-gray-400 focus:outline-none focus:border-indigo-500"
             placeholder="Task title, Enter to add"
           />
         </div>
@@ -565,7 +835,7 @@ function BoardColumn({ column, tasks, onOpenTask, onAddTask }) {
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={`flex-1 px-3 py-2 space-y-2 overflow-y-auto min-h-[120px] transition-colors ${
-              snapshot.isDraggingOver ? 'bg-indigo-900/10' : ''
+              snapshot.isDraggingOver ? 'bg-indigo-50/60' : ''
             }`}
           >
             {tasks.map((task, index) => (
@@ -590,24 +860,24 @@ function TaskCard({ task, index, onClick }) {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={onClick}
-          className={`bg-zinc-800 border border-zinc-700 rounded-lg p-3 cursor-pointer group transition-all ${
+          className={`bg-white border border-gray-200 rounded-lg p-3 cursor-pointer group transition-all ${
             snapshot.isDragging
-              ? 'shadow-xl border-indigo-500/50 rotate-[3deg] scale-[1.02]'
-              : 'hover:border-zinc-600'
+              ? 'shadow-lg border-indigo-400 rotate-[3deg] scale-[1.02]'
+              : 'hover:border-gray-300 hover:shadow-sm'
           }`}
         >
           <div className="flex items-start justify-between gap-2">
-            <p className="text-xs text-zinc-200 leading-relaxed break-words flex-1">{task.title}</p>
+            <p className="text-xs text-gray-800 leading-relaxed break-words flex-1">{task.title}</p>
             <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded whitespace-nowrap flex-shrink-0 ${badge.class}`}>
               {badge.label}
             </span>
           </div>
           {task.description && (
-            <p className="text-[11px] text-zinc-500 mt-1.5 line-clamp-2">{task.description}</p>
+            <p className="text-[11px] text-gray-500 mt-1.5 line-clamp-2">{task.description}</p>
           )}
           <div className="flex items-center gap-2 mt-2">
             {task.assigned_username && (
-              <span className="text-[10px] text-zinc-600">@{task.assigned_username}</span>
+              <span className="text-[10px] text-gray-400">@{task.assigned_username}</span>
             )}
           </div>
         </div>
@@ -686,7 +956,7 @@ function BoardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-600 border-t-zinc-300" />
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-indigo-500" />
       </div>
     );
   }
@@ -695,12 +965,12 @@ function BoardPage() {
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div>
-          <h1 className="text-lg font-semibold text-zinc-100">Board</h1>
-          <p className="text-xs text-zinc-500 mt-0.5">Drag and drop tasks to update status</p>
+          <h1 className="text-lg font-semibold text-gray-900">Board</h1>
+          <p className="text-xs text-gray-500 mt-0.5">Drag and drop tasks to update status</p>
         </div>
         <button
           onClick={() => setModalTask({ id: null, title: '', description: '', priority: 'medium', status: 'todo' })}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-zinc-100 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors"
         >
           <Icons.plus /> New Task
         </button>
@@ -736,6 +1006,9 @@ function BoardPage() {
 function BuildsPage() {
   const [builds, setBuilds] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
   const [triggering, setTriggering] = useState(false);
   const [branch, setBranch] = useState('main');
   const [wsConnected, setWsConnected] = useState(false);
@@ -776,6 +1049,29 @@ function BuildsPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadBuilds();
+    setRefreshing(false);
+  };
+
+  const handleSyncFromJenkins = async () => {
+    setSyncing(true);
+    setSyncMessage('');
+    try {
+      const data = await api.syncBuildsFromJenkins();
+      setSyncMessage(data.message || `Synced ${data.builds?.length || 0} builds`);
+      // Refresh the builds list after sync
+      await loadBuilds();
+      // Auto-dismiss success message after 5 seconds
+      setTimeout(() => setSyncMessage(''), 5000);
+    } catch (err) {
+      setSyncMessage(`Sync failed: ${err.message}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const triggerBuild = async () => {
     setTriggering(true);
     try {
@@ -788,26 +1084,77 @@ function BuildsPage() {
     }
   };
 
+  const statusColors = (status) => {
+    if (status === 'success') return 'bg-emerald-500';
+    if (status === 'failed') return 'bg-red-500';
+    if (status === 'running') return 'bg-amber-500 animate-pulse';
+    return 'bg-gray-400';
+  };
+
+  const badgeColors = (status) => {
+    if (status === 'success') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (status === 'failed') return 'bg-red-50 text-red-700 border-red-200';
+    if (status === 'running') return 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse';
+    return 'bg-gray-100 text-gray-500 border-gray-200';
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-zinc-100">Build Pipeline</h1>
-          <p className="text-xs text-zinc-500 mt-0.5">CI/CD pipeline status and logs</p>
+          <h1 className="text-lg font-semibold text-gray-900">Build Pipeline</h1>
+          <p className="text-xs text-gray-500 mt-0.5">CI/CD pipeline status and logs</p>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className={`w-1.5 h-1.5 rounded-full ${wsConnected ? 'bg-emerald-500' : 'bg-zinc-600'}`} />
-          <span className="text-[11px] text-zinc-500">{wsConnected ? 'Live' : 'Offline'}</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSyncFromJenkins}
+            disabled={syncing}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors disabled:opacity-50"
+            title="Sync builds from Jenkins"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+            {syncing ? 'Syncing...' : 'Sync from Jenkins'}
+          </button>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-800 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 shadow-sm"
+            title="Refresh builds"
+          >
+            {refreshing ? <Icons.spinner /> : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
+              </svg>
+            )}
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+          <div className="flex items-center gap-1.5 ml-1">
+            <span className={`w-1.5 h-1.5 rounded-full ${wsConnected ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+            <span className="text-[11px] text-gray-500">{wsConnected ? 'Live' : 'Offline'}</span>
+          </div>
         </div>
       </div>
 
+      {/* Sync status message */}
+      {syncMessage && (
+        <div className={`px-4 py-2.5 rounded-lg text-xs font-medium border ${
+          syncMessage.includes('failed')
+            ? 'bg-red-50 text-red-700 border-red-200'
+            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+        }`}>
+          {syncMessage}
+        </div>
+      )}
+
       {/* Trigger Build */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+      <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
         <div className="flex items-center gap-2.5">
           <select
             value={branch}
             onChange={(e) => setBranch(e.target.value)}
-            className="px-3 py-1.5 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300 text-xs focus:outline-none focus:border-indigo-500"
+            className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-gray-700 text-xs focus:outline-none focus:border-indigo-500"
           >
             <option value="main">main</option>
             <option value="develop">develop</option>
@@ -816,7 +1163,7 @@ function BuildsPage() {
           <button
             onClick={triggerBuild}
             disabled={triggering}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-zinc-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {triggering ? <Icons.spinner /> : <Icons.play />}
             {triggering ? 'Triggering...' : 'Trigger Build'}
@@ -827,39 +1174,29 @@ function BuildsPage() {
       {/* Build List */}
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-600 border-t-zinc-300" />
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-indigo-500" />
         </div>
       ) : builds.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-xs text-zinc-600">No builds yet. Trigger your first build!</p>
+          <p className="text-xs text-gray-500">No builds yet. Trigger your first build!</p>
         </div>
       ) : (
         <div className="space-y-2">
           {builds.map((build) => (
-            <div key={build.id} className="bg-zinc-900 border border-zinc-800 rounded-lg">
+            <div key={build.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <button
                 onClick={() => setExpandedId(expandedId === build.id ? null : build.id)}
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-zinc-800/50 transition-colors rounded-lg"
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors rounded-lg"
               >
                 <div className="flex items-center gap-3">
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                    build.status === 'success' ? 'bg-emerald-500' :
-                    build.status === 'failed' ? 'bg-red-500' :
-                    build.status === 'running' ? 'bg-amber-500 animate-pulse' :
-                    'bg-zinc-600'
-                  }`} />
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusColors(build.status)}`} />
                   <div className="text-left">
-                    <span className="text-sm text-zinc-200 font-medium">Build #{build.build_number}</span>
-                    <span className="text-xs text-zinc-600 ml-2">{build.branch}</span>
+                    <span className="text-sm text-gray-800 font-medium">Build #{build.build_number}</span>
+                    <span className="text-xs text-gray-400 ml-2">{build.branch}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                    build.status === 'success' ? 'bg-emerald-900/30 text-emerald-400' :
-                    build.status === 'failed' ? 'bg-red-900/30 text-red-400' :
-                    build.status === 'running' ? 'bg-amber-900/30 text-amber-400 animate-pulse' :
-                    'bg-zinc-800 text-zinc-500'
-                  }`}>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${badgeColors(build.status)}`}>
                     {build.status}
                   </span>
                   <Icons.chevronDown />
@@ -867,16 +1204,16 @@ function BuildsPage() {
               </button>
 
               {expandedId === build.id && (
-                <div className="px-4 pb-4 space-y-2 border-t border-zinc-800 pt-3">
+                <div className="px-4 pb-4 space-y-2 border-t border-gray-200 pt-3">
                   {build.commit_message && (
-                    <p className="text-xs text-zinc-400">{build.commit_message}</p>
+                    <p className="text-xs text-gray-500">{build.commit_message}</p>
                   )}
                   {build.logs && (
-                    <div className="bg-zinc-950 rounded-lg p-3 font-mono text-[11px] text-zinc-500 overflow-x-auto max-h-48 overflow-y-auto">
+                    <div className="bg-gray-100 rounded-lg p-3 font-mono text-[11px] text-gray-600 overflow-x-auto max-h-48 overflow-y-auto">
                       <pre className="whitespace-pre-wrap">{build.logs}</pre>
                     </div>
                   )}
-                  <div className="flex items-center gap-4 text-[10px] text-zinc-600">
+                  <div className="flex items-center gap-4 text-[10px] text-gray-400">
                     {build.triggered_username && <span>By: {build.triggered_username}</span>}
                     {build.started_at && <span>Start: {new Date(build.started_at).toLocaleString()}</span>}
                     {build.finished_at && <span>End: {new Date(build.finished_at).toLocaleString()}</span>}
@@ -909,10 +1246,10 @@ export default function App() {
   if (!user) return <LoginPage onLogin={handleLogin} />;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar user={user} onLogout={handleLogout} activePage={page} onNavigate={setPage} />
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 min-h-0">
-        {page === 'dashboard' && <DashboardPage />}
+        {page === 'dashboard' && <DashboardPage onNavigate={setPage} />}
         {page === 'board' && <BoardPage />}
         {page === 'builds' && <BuildsPage />}
       </main>

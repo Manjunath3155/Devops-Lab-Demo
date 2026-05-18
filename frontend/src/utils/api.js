@@ -105,6 +105,12 @@ class ApiClient {
     return this.request('/builds/stats/summary');
   }
 
+  syncBuildsFromJenkins() {
+    return this.request('/builds/sync-from-jenkins', {
+      method: 'POST',
+    });
+  }
+
   // Health
   healthCheck() {
     return this.request('/health');

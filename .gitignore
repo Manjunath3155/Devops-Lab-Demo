@@ -23,6 +23,7 @@ backend/data/
 # OS
 .DS_Store
 Thumbs.db
+nul
 *.log
 
 # Docker
