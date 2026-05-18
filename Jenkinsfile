@@ -50,6 +50,15 @@ pipeline {
             }
         }
 
+        stage('OWASP Dependency-Check') {
+            steps {
+                // Update the installation name if it differs in Jenkins → Manage Jenkins → Tools
+                dependencyCheck additionalArguments: '--scan backend --scan frontend --format HTML --format XML --out dependency-check-report --failOnCVSS 7',
+                                odcInstallation: 'dependency-check'
+                dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml'
+            }
+        }
+
         stage('Build Docker Images') {
             steps {
                 script {
