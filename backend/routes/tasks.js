@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../database');
 const { authenticateToken } = require('../middleware/auth');
+const { triggerBuildForTask, shouldTriggerPipeline } = require('../services/buildTrigger');
 
 const router = express.Router();
 
@@ -56,19 +57,34 @@ router.get('/:id', authenticateToken, (req, res) => {
 
 // Create task
 router.post('/', authenticateToken, (req, res) => {
-  const { title, description, priority, assigned_to } = req.body;
+  const { title, description, priority, status, assigned_to } = req.body;
 
   if (!title) {
     return res.status(400).json({ error: 'Title is required' });
   }
 
+  const taskStatus = status || 'todo';
+
   try {
     const stmt = db.prepare(
-      'INSERT INTO tasks (title, description, priority, assigned_to, created_by) VALUES (?, ?, ?, ?, ?)'
+      'INSERT INTO tasks (title, description, priority, status, assigned_to, created_by) VALUES (?, ?, ?, ?, ?, ?)'
     );
-    const result = stmt.run(title, description || '', priority || 'medium', assigned_to || null, req.user.id);
+    const result = stmt.run(
+      title,
+      description || '',
+      priority || 'medium',
+      taskStatus,
+      assigned_to || null,
+      req.user.id
+    );
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid);
-    res.status(201).json({ task });
+
+    let pipeline = null;
+    if (shouldTriggerPipeline(null, task.status)) {
+      pipeline = triggerBuildForTask(req.user.id, task);
+    }
+
+    res.status(201).json({ task, ...(pipeline && { pipeline }) });
   } catch (err) {
     res.status(500).json({ error: 'Failed to create task' });
   }
@@ -103,7 +119,13 @@ router.put('/:id', authenticateToken, (req, res) => {
     );
 
     const updatedTask = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
-    res.json({ task: updatedTask });
+
+    let pipeline = null;
+    if (shouldTriggerPipeline(task.status, updatedTask.status)) {
+      pipeline = triggerBuildForTask(req.user.id, updatedTask);
+    }
+
+    res.json({ task: updatedTask, ...(pipeline && { pipeline }) });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update task' });
   }

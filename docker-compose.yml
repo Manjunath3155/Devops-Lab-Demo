@@ -9,6 +9,12 @@ services:
       - NODE_ENV=production
       - PORT=5000
       - JWT_SECRET=devflow-secret-key-change-in-production
+      - JENKINS_URL=http://host.docker.internal:8080
+      - JENKINS_JOB_NAME=Devops-Lab-Demo
+      - JENKINS_USER=manjunathpatil
+      - JENKINS_TOKEN=Manjunath1234
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - devflow-data:/app/data
     networks:

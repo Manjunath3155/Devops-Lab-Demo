@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../database');
 const { authenticateToken } = require('../middleware/auth');
+const { triggerManualBuild } = require('../services/buildTrigger');
 
 const router = express.Router();
 
@@ -51,7 +52,7 @@ router.get('/:id', authenticateToken, (req, res) => {
   res.json({ build, deployments });
 });
 
-// Trigger a new build
+// Trigger a new build (manual from Builds page)
 router.post('/', authenticateToken, (req, res) => {
   const { branch, commit_sha, commit_message } = req.body;
 
@@ -60,46 +61,7 @@ router.post('/', authenticateToken, (req, res) => {
   }
 
   try {
-    // Get next build number
-    const lastBuild = db.prepare('SELECT MAX(build_number) as max_num FROM builds').get();
-    const buildNumber = (lastBuild.max_num || 0) + 1;
-
-    const stmt = db.prepare(
-      'INSERT INTO builds (build_number, branch, commit_sha, commit_message, status, triggered_by, started_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    );
-    const result = stmt.run(
-      buildNumber,
-      branch,
-      commit_sha || '',
-      commit_message || '',
-      'running',
-      req.user.id,
-      new Date().toISOString()
-    );
-
-    const build = db.prepare('SELECT * FROM builds WHERE id = ?').get(result.lastInsertRowid);
-
-    // Simulate build progress (in production, this would be async)
-    setTimeout(() => {
-      const success = Math.random() > 0.3; // 70% success rate for demo
-      db.prepare(`
-        UPDATE builds SET status = ?, finished_at = ?, logs = ? WHERE id = ?
-      `).run(
-        success ? 'success' : 'failed',
-        new Date().toISOString(),
-        success
-          ? `[${new Date().toISOString()}] Build #${buildNumber} started\n[${new Date().toISOString()}] Cloning repository...\n[${new Date().toISOString()}] Checking out ${branch}...\n[${new Date().toISOString()}] Installing dependencies...\n[${new Date().toISOString()}] Running tests...\n[${new Date().toISOString()}] All tests passed ✓\n[${new Date().toISOString()}] Building project...\n[${new Date().toISOString()}] Build completed successfully ✓`
-          : `[${new Date().toISOString()}] Build #${buildNumber} started\n[${new Date().toISOString()}] Cloning repository...\n[${new Date().toISOString()}] Checking out ${branch}...\n[${new Date().toISOString()}] Installing dependencies...\n[${new Date().toISOString()}] Running tests...\n[${new Date().toISOString()}] Test failed: AssertionError in pipeline.test.js\n[${new Date().toISOString()}] Build failed ✗`,
-        build.id
-      );
-
-      // Broadcast via WebSocket (will be connected in server.js)
-      const updatedBuild = db.prepare('SELECT * FROM builds WHERE id = ?').get(build.id);
-      if (global.broadcastBuildUpdate) {
-        global.broadcastBuildUpdate(updatedBuild);
-      }
-    }, 3000);
-
+    const { build } = triggerManualBuild(req.user.id, { branch, commit_sha, commit_message });
     res.status(201).json({ build, message: 'Build triggered successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to trigger build' });
@@ -134,24 +96,58 @@ router.get('/stats/summary', authenticateToken, (req, res) => {
   }
 });
 
+function branchFromJenkinsBuild(detail) {
+  for (const action of detail.actions || []) {
+    const branches = action.lastBuiltRevision?.branch;
+    if (branches?.length) {
+      const name = branches[0].name || '';
+      return name.replace(/^refs\/heads\//, '').replace(/^origin\//, '') || 'main';
+    }
+  }
+  const params = detail.actions?.find((a) => a.parameters)?.parameters || [];
+  const branchParam = params.find((p) => /branch/i.test(p.name))?.value;
+  if (branchParam) return String(branchParam).replace(/^origin\//, '');
+  return 'main';
+}
+
+function commitFromJenkinsBuild(detail) {
+  for (const action of detail.actions || []) {
+    if (action.lastBuiltRevision?.SHA1) return action.lastBuiltRevision.SHA1;
+  }
+  const items = detail.changeSet?.items;
+  if (items?.length) return items[items.length - 1].commitId || '';
+  return '';
+}
+
+async function fetchJenkinsConsoleLog(jenkinsUrl, jobName, buildNumber, authHeaders) {
+  const url = `${jenkinsUrl}/job/${encodeURIComponent(jobName)}/${buildNumber}/consoleText`;
+  const resp = await fetch(url, { headers: authHeaders });
+  if (!resp.ok) return '';
+  const text = await resp.text();
+  return text.length > 50000 ? text.slice(-50000) : text;
+}
+
 // Sync builds from Jenkins API
 router.post('/sync-from-jenkins', authenticateToken, async (req, res) => {
-  const JENKINS_URL = 'http://localhost:8080';
-  const JOB_NAME = 'DevFlow-Pipeline';
-  const AUTH = Buffer.from('manjunathpatil:Manjunath1234').toString('base64');
+  // host.docker.internal = Jenkins on your PC when backend runs in Docker
+  const JENKINS_URL = (process.env.JENKINS_URL || 'http://host.docker.internal:8080').replace(/\/$/, '');
+  const JOB_NAME = process.env.JENKINS_JOB_NAME || 'Devops-Lab-Demo';
+  const jenkinsUser = process.env.JENKINS_USER || 'manjunathpatil';
+  const jenkinsToken = process.env.JENKINS_TOKEN || process.env.JENKINS_PASSWORD || 'Manjunath1234';
+  const AUTH = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
+  const authHeaders = {
+    Authorization: `Basic ${AUTH}`,
+    Accept: 'application/json',
+  };
 
   try {
-    // Fetch job info from Jenkins (includes build history)
-    const response = await fetch(`${JENKINS_URL}/job/${JOB_NAME}/api/json`, {
-      headers: {
-        'Authorization': `Basic ${AUTH}`,
-        'Accept': 'application/json',
-      },
+    const response = await fetch(`${JENKINS_URL}/job/${encodeURIComponent(JOB_NAME)}/api/json`, {
+      headers: authHeaders,
     });
 
     if (!response.ok) {
       return res.status(502).json({
-        error: `Jenkins returned ${response.status}. Make sure Jenkins is running at ${JENKINS_URL}`,
+        error: `Jenkins returned ${response.status} for job "${JOB_NAME}". Check JENKINS_URL, job name, and credentials.`,
       });
     }
 
@@ -162,41 +158,36 @@ router.post('/sync-from-jenkins', authenticateToken, async (req, res) => {
       return res.json({ builds: [], message: 'No builds found in Jenkins' });
     }
 
-    // Fetch details for each Jenkins build
     const syncedBuilds = [];
     for (const jb of jenkinsBuilds) {
       try {
-        const detailResp = await fetch(`${jb.url}api/json`, {
-          headers: { 'Authorization': `Basic ${AUTH}`, 'Accept': 'application/json' },
+        const buildApiUrl = `${JENKINS_URL}/job/${encodeURIComponent(JOB_NAME)}/${jb.number}/api/json`;
+        const detailResp = await fetch(buildApiUrl, {
+          headers: authHeaders,
         });
         if (!detailResp.ok) continue;
 
         const detail = await detailResp.json();
+        const consoleLog = await fetchJenkinsConsoleLog(JENKINS_URL, JOB_NAME, jb.number, authHeaders);
 
-        // Map Jenkins build status to ours
         let status = 'pending';
         if (detail.result === 'SUCCESS') status = 'success';
         else if (detail.result === 'FAILURE') status = 'failed';
         else if (detail.building) status = 'running';
         else if (detail.result === 'ABORTED') status = 'cancelled';
 
-        // Check if build already exists (by build_number)
+        const changeItems = detail.changeSet?.items || [];
         const existing = db.prepare('SELECT id FROM builds WHERE build_number = ?').get(jb.number);
 
         const buildData = {
           build_number: jb.number,
-          branch: detail.actions?.find(a => a.parameters)?.parameters?.find(p => p.name === 'branch')?.value || 'main',
+          branch: branchFromJenkinsBuild(detail),
           status,
-          commit_sha: '',
-          commit_message: '',
+          commit_sha: commitFromJenkinsBuild(detail),
+          commit_message: changeItems.length ? changeItems[changeItems.length - 1].msg || '' : '',
           started_at: new Date(detail.timestamp).toISOString(),
           finished_at: detail.building ? null : new Date(detail.timestamp + (detail.duration || 0)).toISOString(),
-          logs: `[${new Date(detail.timestamp).toISOString()}] Jenkins build #${jb.number}\n` +
-                `[${new Date(detail.timestamp).toISOString()}] Pipeline: ${JOB_NAME}\n` +
-                `[${new Date(detail.timestamp + 1000).toISOString()}] Stage: Checkout ✓\n` +
-                `[${new Date(detail.timestamp + 2000).toISOString()}] Stage: Build ✓\n` +
-                `[${new Date(detail.timestamp + 3000).toISOString()}] Result: ${detail.result || 'RUNNING'}\n` +
-                `[${new Date(detail.timestamp + 4000).toISOString()}] Duration: ${(detail.duration / 1000).toFixed(1)}s`,
+          logs: consoleLog || `[${new Date(detail.timestamp).toISOString()}] Jenkins build #${jb.number} (${JOB_NAME})\nResult: ${detail.result || 'RUNNING'}`,
           triggered_by: req.user.id,
         };
 

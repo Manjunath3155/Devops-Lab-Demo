@@ -161,4 +161,48 @@ describe('Task Routes', () => {
       assert.equal(res.status, 404);
     });
   });
+
+  describe('Task → pipeline integration', () => {
+    it('should trigger a build when task moves to done', async () => {
+      const createRes = await request(app, 'POST', '/api/tasks', {
+        token,
+        body: { title: 'Deploy me', status: 'todo' },
+      });
+      const taskId = createRes.body.task.id;
+
+      const res = await request(app, 'PUT', `/api/tasks/${taskId}`, {
+        token,
+        body: { status: 'done' },
+      });
+      assert.equal(res.status, 200);
+      assert.ok(res.body.pipeline);
+      assert.equal(res.body.pipeline.branch, 'main');
+      assert.equal(res.body.pipeline.build.status, 'running');
+      assert.match(res.body.pipeline.build.commit_message, /Deploy me/);
+    });
+
+    it('should trigger CI build when task moves to in_progress', async () => {
+      const createRes = await request(app, 'POST', '/api/tasks', {
+        token,
+        body: { title: 'Start work', status: 'todo' },
+      });
+      const taskId = createRes.body.task.id;
+
+      const res = await request(app, 'PUT', `/api/tasks/${taskId}`, {
+        token,
+        body: { status: 'in_progress' },
+      });
+      assert.equal(res.status, 200);
+      assert.ok(res.body.pipeline);
+      assert.equal(res.body.pipeline.branch, 'develop');
+    });
+
+    it('should not trigger build when staying in todo', async () => {
+      const createRes = await request(app, 'POST', '/api/tasks', {
+        token,
+        body: { title: 'Just a note', status: 'todo' },
+      });
+      assert.equal(createRes.body.pipeline, undefined);
+    });
+  });
 });

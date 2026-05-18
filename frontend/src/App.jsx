@@ -886,12 +886,75 @@ function TaskCard({ task, index, onClick }) {
   );
 }
 
-function BoardPage() {
+function PipelineBanner({ notice, onDismiss, onViewBuilds }) {
+  if (!notice) return null;
+  return (
+    <div className="mb-4 flex items-start gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 shadow-sm">
+      <span className="mt-0.5 flex h-2 w-2 flex-shrink-0 rounded-full bg-indigo-500 animate-pulse" />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium text-indigo-900">{notice.title}</p>
+        <p className="text-[11px] text-indigo-700 mt-0.5">{notice.detail}</p>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <button
+          type="button"
+          onClick={onViewBuilds}
+          className="text-[11px] font-medium text-indigo-700 hover:text-indigo-900 underline"
+        >
+          View builds
+        </button>
+        <button type="button" onClick={onDismiss} className="text-gray-400 hover:text-gray-600">
+          <Icons.close />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BoardPage({ onNavigate }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalTask, setModalTask] = useState(null);
+  const [pipelineNotice, setPipelineNotice] = useState(null);
 
   useEffect(() => { loadTasks(); }, []);
+
+  const showPipelineNotice = (pipeline) => {
+    if (!pipeline?.build) return;
+    const jenkinsNote = pipeline.jenkinsQueued
+      ? ' Jenkins job queued (if Jenkins is running).'
+      : '';
+    setPipelineNotice({
+      title: `Pipeline triggered — ${pipeline.action}`,
+      detail: `Build #${pipeline.build.build_number} running on branch "${pipeline.branch}".${jenkinsNote}`,
+    });
+  };
+
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    let ws;
+    try {
+      ws = new WebSocket(wsUrl);
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'BUILD_UPDATE' && msg.data?.status !== 'running') {
+          setPipelineNotice((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  title: `Build #${msg.data.build_number} ${msg.data.status}`,
+                  detail: `Pipeline finished on ${msg.data.branch}. Open Builds for logs.`,
+                }
+              : prev
+          );
+        }
+      };
+    } catch {
+      /* WebSocket optional */
+    }
+    return () => ws?.close();
+  }, []);
 
   const loadTasks = async () => {
     try {
@@ -920,7 +983,8 @@ function BoardPage() {
     );
 
     try {
-      await api.updateTask(taskId, { status: newStatus });
+      const data = await api.updateTask(taskId, { status: newStatus });
+      showPipelineNotice(data.pipeline);
     } catch (err) {
       // Revert on failure
       loadTasks();
@@ -931,11 +995,13 @@ function BoardPage() {
   const handleCloseModal = () => setModalTask(null);
 
   const handleSaveTask = async (id, form) => {
+    let data;
     if (id) {
-      await api.updateTask(id, form);
+      data = await api.updateTask(id, form);
     } else {
-      await api.createTask({ title: form.title, description: form.description, priority: form.priority, status: form.status });
+      data = await api.createTask({ title: form.title, description: form.description, priority: form.priority, status: form.status });
     }
+    showPipelineNotice(data.pipeline);
     await loadTasks();
   };
 
@@ -946,7 +1012,8 @@ function BoardPage() {
 
   const handleAddTask = async (columnId, title) => {
     try {
-      await api.createTask({ title, status: columnId, priority: 'medium' });
+      const data = await api.createTask({ title, status: columnId, priority: 'medium' });
+      showPipelineNotice(data.pipeline);
       loadTasks();
     } catch (err) {
       console.error('Failed to create task:', err);
@@ -966,7 +1033,9 @@ function BoardPage() {
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div>
           <h1 className="text-lg font-semibold text-gray-900">Board</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Drag and drop tasks to update status</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Drag to In Progress (CI on develop) or Done (deploy on main + Jenkins)
+          </p>
         </div>
         <button
           onClick={() => setModalTask({ id: null, title: '', description: '', priority: 'medium', status: 'todo' })}
@@ -975,6 +1044,12 @@ function BoardPage() {
           <Icons.plus /> New Task
         </button>
       </div>
+
+      <PipelineBanner
+        notice={pipelineNotice}
+        onDismiss={() => setPipelineNotice(null)}
+        onViewBuilds={() => onNavigate?.('builds')}
+      />
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-4 flex-1 min-h-0">
@@ -1084,6 +1159,12 @@ function BuildsPage() {
     }
   };
 
+  const branchOptions = [...new Set([
+    'main',
+    'develop',
+    ...builds.map((b) => b.branch).filter(Boolean),
+  ])];
+
   const statusColors = (status) => {
     if (status === 'success') return 'bg-emerald-500';
     if (status === 'failed') return 'bg-red-500';
@@ -1156,9 +1237,9 @@ function BuildsPage() {
             onChange={(e) => setBranch(e.target.value)}
             className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-gray-700 text-xs focus:outline-none focus:border-indigo-500"
           >
-            <option value="main">main</option>
-            <option value="develop">develop</option>
-            <option value="feature/new-ui">feature/new-ui</option>
+            {branchOptions.map((b) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
           </select>
           <button
             onClick={triggerBuild}
@@ -1250,7 +1331,7 @@ export default function App() {
       <Navbar user={user} onLogout={handleLogout} activePage={page} onNavigate={setPage} />
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 min-h-0">
         {page === 'dashboard' && <DashboardPage onNavigate={setPage} />}
-        {page === 'board' && <BoardPage />}
+        {page === 'board' && <BoardPage onNavigate={setPage} />}
         {page === 'builds' && <BuildsPage />}
       </main>
     </div>

@@ -14,7 +14,6 @@ pipeline {
 
     environment {
         GITHUB_REPO = 'https://github.com/Manjunath3155/Devops-Lab-Demo.git'
-        STAGING_DIR = 'C:/devflow-build'
         DOCKER_CMD = '"C:/Program Files/Docker/Docker/resources/bin/docker"'
     }
 
@@ -54,20 +53,8 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 script {
-                    // Copy workspace to a path without spaces (Docker Desktop on Windows
-                    // fails when the project path contains spaces)
-                    echo 'Copying workspace to staging directory...'
-                    bat """
-                        if exist "${STAGING_DIR}" rmdir /s /q "${STAGING_DIR}"
-                        mkdir "${STAGING_DIR}"
-                        xcopy /e /i /h /q "${WORKSPACE}\\*" "${STAGING_DIR}"
-                    """
-
-                    bat "if exist \"${STAGING_DIR}\\backend\\node_modules\" rmdir /s /q \"${STAGING_DIR}\\backend\\node_modules\""
-                    bat "if exist \"${STAGING_DIR}\\frontend\\node_modules\" rmdir /s /q \"${STAGING_DIR}\\frontend\\node_modules\""
-                    bat "if exist \"${STAGING_DIR}\\.git\" rmdir /s /q \"${STAGING_DIR}\\.git\""
-
-                    dir(env.STAGING_DIR) {
+                    // Jenkins workspace has no spaces — build directly (no C:/devflow-build copy)
+                    dir(env.WORKSPACE) {
                         echo 'Building backend Docker image...'
                         bat "${DOCKER_CMD} build -f Dockerfile.backend -t devflow-backend:latest ."
                         echo 'Building frontend Docker image...'
@@ -81,7 +68,7 @@ pipeline {
         stage('Start Application') {
             steps {
                 script {
-                    dir(env.STAGING_DIR) {
+                    dir(env.WORKSPACE) {
                         echo 'Starting Docker containers...'
                         bat "${DOCKER_CMD} compose up -d --force-recreate"
                         echo 'DevFlow is running at http://localhost'
@@ -93,8 +80,7 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up staging directory...'
-            bat "if exist \"${STAGING_DIR}\" rmdir /s /q \"${STAGING_DIR}\""
+            echo 'Pipeline finished.'
         }
         success {
             echo 'Pipeline completed successfully! DevFlow is live!'
