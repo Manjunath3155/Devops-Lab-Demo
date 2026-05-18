@@ -52,6 +52,8 @@ pipeline {
 
         stage('OWASP Dependency-Check') {
             steps {
+                // Ensure output directory exists for Dependency-Check reports
+                bat 'if not exist dependency-check-report mkdir dependency-check-report'
                 // Update the installation name if it differs in Jenkins → Manage Jenkins → Tools
                 dependencyCheck additionalArguments: '--scan backend --scan frontend --format HTML --format XML --out dependency-check-report --failOnCVSS 7',
                                 odcInstallation: 'dependency-check'
