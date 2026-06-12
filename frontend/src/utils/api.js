@@ -94,10 +94,20 @@ class ApiClient {
     return this.request(`/builds/${id}`);
   }
 
-  triggerBuild(branch, commitSha = '', commitMessage = '') {
+  getJenkinsJobs() {
+    return this.request('/builds/jenkins/jobs');
+  }
+
+  triggerBuild(branch, { commitSha = '', commitMessage = '', jenkinsJob, triggerJenkins = true } = {}) {
     return this.request('/builds', {
       method: 'POST',
-      body: JSON.stringify({ branch, commit_sha: commitSha, commit_message: commitMessage }),
+      body: JSON.stringify({
+        branch,
+        commit_sha: commitSha,
+        commit_message: commitMessage,
+        jenkins_job: jenkinsJob,
+        trigger_jenkins: triggerJenkins,
+      }),
     });
   }
 
@@ -105,10 +115,15 @@ class ApiClient {
     return this.request('/builds/stats/summary');
   }
 
-  syncBuildsFromJenkins() {
+  syncBuildsFromJenkins(jenkinsJob) {
     return this.request('/builds/sync-from-jenkins', {
       method: 'POST',
+      body: JSON.stringify({ jenkins_job: jenkinsJob }),
     });
+  }
+
+  getJenkinsStatus() {
+    return this.request('/builds/jenkins/status');
   }
 
   // Health

@@ -246,6 +246,7 @@ function DashboardPage({ onNavigate }) {
   const [stats, setStats] = useState(null);
   const [builds, setBuilds] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [jenkinsStatus, setJenkinsStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -253,14 +254,16 @@ function DashboardPage({ onNavigate }) {
 
   const loadDashboard = async () => {
     try {
-      const [statsData, buildsData, tasksData] = await Promise.all([
+      const [statsData, buildsData, tasksData, jenkinsData] = await Promise.all([
         api.getBuildStats(),
         api.getBuilds(),
         api.getTasks(),
+        api.getJenkinsStatus().catch(() => null),
       ]);
       setStats(statsData.stats);
       setBuilds(buildsData.builds || []);
       setTasks(tasksData.tasks || []);
+      setJenkinsStatus(jenkinsData);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
     } finally {
@@ -272,6 +275,13 @@ function DashboardPage({ onNavigate }) {
     setRefreshing(true);
     await loadDashboard();
     setRefreshing(false);
+  };
+
+  const fmtDuration = (sec) => {
+    if (!sec) return '—';
+    if (sec < 60) return `${sec}s`;
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return s > 0 ? `${m}m ${s}s` : `${m}m`;
   };
 
   if (loading) {
@@ -289,6 +299,9 @@ function DashboardPage({ onNavigate }) {
   const successRate = stats?.successRate || 0;
   const totalTasks = stats?.totalTasks || 0;
   const completedTasks = stats?.completedTasks || 0;
+  const inProgressTasksCount = stats?.inProgressTasks || 0;
+  const avgDurationSec = stats?.avgDurationSec || null;
+  const byJob = stats?.byJob || [];
 
   // Task distribution by status
   const todoTasks = tasks.filter(t => t.status === 'todo').length;
@@ -296,15 +309,20 @@ function DashboardPage({ onNavigate }) {
   const doneTasks = tasks.filter(t => t.status === 'done').length;
   const taskTotal = todoTasks + inProgressTasks + doneTasks || 1;
 
-  // Build by branch
-  const branchMap = {};
-  builds.forEach(b => {
-    if (!branchMap[b.branch]) branchMap[b.branch] = { branch: b.branch, total: 0, success: 0, failed: 0 };
-    branchMap[b.branch].total++;
-    if (b.status === 'success') branchMap[b.branch].success++;
-    if (b.status === 'failed') branchMap[b.branch].failed++;
-  });
-  const branches = Object.values(branchMap);
+  // Use server-side byBranch if available, else compute locally
+  const branches = stats?.byBranch?.length
+    ? stats.byBranch
+    : (() => {
+        const m = {};
+        builds.forEach(b => {
+          const br = (b.branch || 'main').replace(/^refs\/remotes\/origin\//, '').replace(/^origin\//, '');
+          if (!m[br]) m[br] = { branch: br, total: 0, success: 0, failed: 0 };
+          m[br].total++;
+          if (b.status === 'success') m[br].success++;
+          if (b.status === 'failed') m[br].failed++;
+        });
+        return Object.values(m);
+      })();
 
   // Build activity feed - combine builds and tasks chronologically
   const buildItems = builds.map(b => ({
@@ -312,8 +330,10 @@ function DashboardPage({ onNavigate }) {
     type: 'build',
     timestamp: new Date(b.created_at || b.started_at || Date.now()),
     build_number: b.build_number,
-    branch: b.branch,
+    branch: (b.branch || 'main').replace(/^refs\/remotes\/origin\//, '').replace(/^origin\//, ''),
+    jenkins_job: b.jenkins_job || 'DevFlow-Pipeline',
     status: b.status,
+    commit_message: b.commit_message,
   }));
   const taskItems = tasks.map(t => ({
     id: `t-${t.id}`,
@@ -336,10 +356,27 @@ function DashboardPage({ onNavigate }) {
     .slice(0, 5);
 
   const cards = [
-    { label: 'Total Builds', value: totalBuilds, change: `${successRate}% success rate`, accent: totalBuilds > 0 ? 'text-indigo-600' : 'text-gray-400', icon: 'builds' },
-    { label: 'Tasks', value: `${completedTasks}/${totalTasks}`, change: 'completed', accent: totalTasks > 0 ? 'text-emerald-600' : 'text-gray-400', icon: 'board' },
-    { label: 'Running', value: runningCount, change: 'active builds', accent: runningCount > 0 ? 'text-amber-600' : 'text-gray-400', icon: 'play' },
-    { label: 'Success Rate', value: `${successRate}%`, change: 'overall', accent: successRate >= 80 ? 'text-emerald-600' : successRate >= 50 ? 'text-amber-600' : 'text-gray-400', icon: 'logo' },
+    {
+      label: 'Total Builds', value: totalBuilds,
+      sub: `${successCount} passed · ${failedCount} failed`,
+      accent: totalBuilds > 0 ? 'text-indigo-600' : 'text-gray-400', icon: 'builds',
+    },
+    {
+      label: 'Tasks', value: `${completedTasks}/${totalTasks}`,
+      sub: `${inProgressTasksCount} in progress · ${todoTasks} to do`,
+      accent: totalTasks > 0 ? 'text-emerald-600' : 'text-gray-400', icon: 'board',
+    },
+    {
+      label: 'Avg Build Time', value: fmtDuration(avgDurationSec),
+      sub: avgDurationSec ? 'for completed builds' : 'no data yet',
+      accent: avgDurationSec ? (avgDurationSec < 120 ? 'text-emerald-600' : avgDurationSec < 300 ? 'text-amber-600' : 'text-red-600') : 'text-gray-400',
+      icon: 'play',
+    },
+    {
+      label: 'Success Rate', value: `${successRate}%`,
+      sub: runningCount > 0 ? `${runningCount} currently running` : 'overall pipeline health',
+      accent: successRate >= 80 ? 'text-emerald-600' : successRate >= 50 ? 'text-amber-600' : 'text-gray-400', icon: 'logo',
+    },
   ];
 
   const buildTotalForBar = successCount + failedCount;
@@ -433,9 +470,50 @@ function DashboardPage({ onNavigate }) {
               </span>
             </div>
             <p className={`text-2xl font-semibold mt-1 ${card.accent}`}>{card.value}</p>
-            <p className="text-[11px] text-gray-400 mt-1">{card.change}</p>
+            <p className="text-[11px] text-gray-400 mt-1">{card.sub}</p>
           </div>
         ))}
+      </div>
+
+      {/* Jenkins Status */}
+      <div className="bg-white border border-gray-200 rounded-lg p-3 px-4 shadow-sm">
+        <div className="flex items-center flex-wrap gap-3">
+          <span className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Jenkins</span>
+          <div className="h-4 w-px bg-gray-200" />
+          {jenkinsStatus === null ? (
+            <span className="text-[11px] text-gray-400">Checking...</span>
+          ) : jenkinsStatus?.reachable ? (
+            <>
+              <span className="flex items-center gap-1.5 text-[11px] text-emerald-700">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Connected to Jenkins
+              </span>
+              {(jenkinsStatus.jobs || []).map((job) => {
+                const result = job.lastBuildResult;
+                const dot = result === 'SUCCESS' ? 'bg-emerald-500' :
+                             result === 'FAILURE' ? 'bg-red-500' :
+                             result === 'ABORTED' ? 'bg-gray-400' : 'bg-amber-400';
+                const label = result === 'SUCCESS' ? 'passed' :
+                               result === 'FAILURE' ? 'failed' :
+                               result === 'ABORTED' ? 'aborted' : 'unknown';
+                return (
+                  <span key={job.name} className="flex items-center gap-1.5 text-[11px] text-gray-600 bg-gray-50 border border-gray-200 rounded px-2 py-0.5">
+                    <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+                    {job.name}
+                    {job.lastBuildNumber && (
+                      <span className="text-gray-400">#{job.lastBuildNumber} · {label}</span>
+                    )}
+                  </span>
+                );
+              })}
+            </>
+          ) : (
+            <span className="flex items-center gap-1.5 text-[11px] text-red-600">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              Jenkins unreachable — check if Jenkins is running at :8080
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Recent Builds - visual cards */}
@@ -591,7 +669,9 @@ function DashboardPage({ onNavigate }) {
                   <div className="pb-3 flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[11px] text-gray-700 truncate">
-                        {item.type === 'build' ? `Build #${item.build_number}` : item.title}
+                        {item.type === 'build'
+                          ? `${item.jenkins_job} #${item.build_number}`
+                          : item.title}
                       </span>
                       <span className="text-[9px] text-gray-400 flex-shrink-0">
                         {timeAgo(item.timestamp)}
@@ -794,6 +874,8 @@ function BoardColumn({ column, tasks, onOpenTask, onAddTask }) {
     if (e.key === 'Escape') { setShowInput(false); setNewTitle(''); }
   };
 
+  const highCount = tasks.filter(t => t.priority === 'critical' || t.priority === 'high').length;
+
   return (
     <div className="bg-gray-50/80 rounded-xl border border-gray-200 flex flex-col flex-1 min-w-0" style={{ minHeight: 0 }}>
       {/* Column Header */}
@@ -802,6 +884,11 @@ function BoardColumn({ column, tasks, onOpenTask, onAddTask }) {
           <span className={`w-2 h-2 rounded-full ${column.color}`} />
           <h3 className="text-xs font-medium text-gray-700">{column.title}</h3>
           <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{tasks.length}</span>
+          {highCount > 0 && (
+            <span className="text-[10px] font-medium bg-orange-50 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded">
+              {highCount} urgent
+            </span>
+          )}
         </div>
         <button
           onClick={() => setShowInput(true)}
@@ -1028,13 +1115,23 @@ function BoardPage({ onNavigate }) {
     );
   }
 
+  const totalTasks = tasks.length;
+  const doneTasks = tasks.filter(t => t.status === 'done').length;
+  const completionPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900">Board</h1>
+          <h1 className="text-lg font-semibold text-gray-900">Board
+            {totalTasks > 0 && (
+              <span className="ml-2 text-sm font-normal text-gray-400">
+                {completionPct}% complete ({doneTasks}/{totalTasks})
+              </span>
+            )}
+          </h1>
           <p className="text-xs text-gray-500 mt-0.5">
-            Drag to In Progress (CI on develop) or Done (deploy on main + Jenkins)
+            Drag to In Progress → CI on develop · Done → deploy on main + Jenkins
           </p>
         </div>
         <button
@@ -1078,7 +1175,17 @@ function BoardPage({ onNavigate }) {
 }
 
 // ─── Builds Page ─────────────────────────────────────────────────
+const JENKINS_JOB_KEY = 'devflow_jenkins_job';
+
 function BuildsPage() {
+  const fmtDuration = (start, end) => {
+    if (!start || !end) return null;
+    const sec = Math.round((new Date(end) - new Date(start)) / 1000);
+    if (sec < 0) return null;
+    if (sec < 60) return `${sec}s`;
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return s > 0 ? `${m}m ${s}s` : `${m}m`;
+  };
   const [builds, setBuilds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -1086,14 +1193,41 @@ function BuildsPage() {
   const [syncMessage, setSyncMessage] = useState('');
   const [triggering, setTriggering] = useState(false);
   const [branch, setBranch] = useState('main');
+  const [pipeline, setPipeline] = useState(() => localStorage.getItem(JENKINS_JOB_KEY) || 'Devops-Lab-Demo');
+  const [jenkinsJobs, setJenkinsJobs] = useState(['Devops-Lab-Demo', 'DevFlow-Pipeline']);
   const [wsConnected, setWsConnected] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [jenkinsJobStatus, setJenkinsJobStatus] = useState(null);
+
+  useEffect(() => {
+    api.getJenkinsJobs()
+      .then((data) => {
+        if (data.jobs?.length) setJenkinsJobs(data.jobs);
+        if (data.defaultJob && !localStorage.getItem(JENKINS_JOB_KEY)) {
+          setPipeline(data.defaultJob);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     loadBuilds();
     const cleanup = connectWebSocket();
+    // Fetch Jenkins status for current pipeline
+    api.getJenkinsStatus()
+      .then((data) => {
+        const job = (data.jobs || []).find(j => j.name === pipeline);
+        setJenkinsJobStatus(job || null);
+      })
+      .catch(() => setJenkinsJobStatus(null));
     return cleanup;
-  }, []);
+  }, [pipeline]);
+
+  const handlePipelineChange = (job) => {
+    setPipeline(job);
+    localStorage.setItem(JENKINS_JOB_KEY, job);
+  };
 
   const connectWebSocket = () => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -1115,7 +1249,7 @@ function BuildsPage() {
 
   const loadBuilds = async () => {
     try {
-      const data = await api.getBuilds();
+      const data = await api.getBuilds({ jenkins_job: pipeline });
       setBuilds(data.builds || []);
     } catch (err) {
       console.error('Failed to load builds:', err);
@@ -1134,7 +1268,7 @@ function BuildsPage() {
     setSyncing(true);
     setSyncMessage('');
     try {
-      const data = await api.syncBuildsFromJenkins();
+      const data = await api.syncBuildsFromJenkins(pipeline);
       setSyncMessage(data.message || `Synced ${data.builds?.length || 0} builds`);
       // Refresh the builds list after sync
       await loadBuilds();
@@ -1150,7 +1284,8 @@ function BuildsPage() {
   const triggerBuild = async () => {
     setTriggering(true);
     try {
-      await api.triggerBuild(branch);
+      const data = await api.triggerBuild(branch, { jenkinsJob: pipeline });
+      setSyncMessage(data.message || `Triggered ${pipeline}`);
       loadBuilds();
     } catch (err) {
       console.error('Failed to trigger build:', err);
@@ -1164,6 +1299,17 @@ function BuildsPage() {
     'develop',
     ...builds.map((b) => b.branch).filter(Boolean),
   ])];
+
+  const filteredBuilds = statusFilter === 'all'
+    ? builds
+    : builds.filter(b => b.status === statusFilter);
+
+  const statusCounts = {
+    all: builds.length,
+    running: builds.filter(b => b.status === 'running').length,
+    success: builds.filter(b => b.status === 'success').length,
+    failed: builds.filter(b => b.status === 'failed').length,
+  };
 
   const statusColors = (status) => {
     if (status === 'success') return 'bg-emerald-500';
@@ -1212,16 +1358,59 @@ function BuildsPage() {
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </button>
           <div className="flex items-center gap-1.5 ml-1">
-            <span className={`w-1.5 h-1.5 rounded-full ${wsConnected ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+            <span className={`w-1.5 h-1.5 rounded-full ${wsConnected ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`} />
             <span className="text-[11px] text-gray-500">{wsConnected ? 'Live' : 'Offline'}</span>
           </div>
         </div>
       </div>
 
+      {/* Jenkins job status for current pipeline */}
+      {jenkinsJobStatus && (
+        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs ${
+          jenkinsJobStatus.lastBuildResult === 'SUCCESS' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+          jenkinsJobStatus.lastBuildResult === 'FAILURE' ? 'bg-red-50 border-red-200 text-red-800' :
+          'bg-gray-50 border-gray-200 text-gray-600'
+        }`}>
+          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+            jenkinsJobStatus.lastBuildResult === 'SUCCESS' ? 'bg-emerald-500' :
+            jenkinsJobStatus.lastBuildResult === 'FAILURE' ? 'bg-red-500' : 'bg-gray-400'
+          }`} />
+          <span className="font-medium">{pipeline}</span>
+          {jenkinsJobStatus.lastBuildNumber && (
+            <span>· Last build #{jenkinsJobStatus.lastBuildNumber} — {jenkinsJobStatus.lastBuildResult || 'UNKNOWN'}</span>
+          )}
+          {jenkinsJobStatus.lastBuildTimestamp && (
+            <span className="ml-auto text-[10px] opacity-70">
+              {new Date(jenkinsJobStatus.lastBuildTimestamp).toLocaleString()}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Status filter tabs */}
+      <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-fit shadow-sm">
+        {[['all','All'],['running','Running'],['success','Passed'],['failed','Failed']].map(([val, label]) => (
+          <button
+            key={val}
+            onClick={() => setStatusFilter(val)}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors ${
+              statusFilter === val
+                ? 'bg-gray-900 text-white'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            {label}
+            <span className={`text-[10px] px-1 py-0.5 rounded ${
+              statusFilter === val ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+            }`}>{statusCounts[val]}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Sync status message */}
       {syncMessage && (
         <div className={`px-4 py-2.5 rounded-lg text-xs font-medium border ${
-          syncMessage.includes('failed')
+          syncMessage.toLowerCase().includes('fail') || syncMessage.toLowerCase().includes('error')
             ? 'bg-red-50 text-red-700 border-red-200'
             : 'bg-emerald-50 text-emerald-700 border-emerald-200'
         }`}>
@@ -1230,8 +1419,19 @@ function BuildsPage() {
       )}
 
       {/* Trigger Build */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-        <div className="flex items-center gap-2.5">
+      <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <label className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Pipeline</label>
+          <select
+            value={pipeline}
+            onChange={(e) => handlePipelineChange(e.target.value)}
+            className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-gray-700 text-xs focus:outline-none focus:border-indigo-500 min-w-[160px]"
+          >
+            {jenkinsJobs.map((job) => (
+              <option key={job} value={job}>{job}</option>
+            ))}
+          </select>
+          <label className="text-[10px] font-medium text-gray-500 uppercase tracking-wide ml-2">Branch</label>
           <select
             value={branch}
             onChange={(e) => setBranch(e.target.value)}
@@ -1247,9 +1447,12 @@ function BuildsPage() {
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {triggering ? <Icons.spinner /> : <Icons.play />}
-            {triggering ? 'Triggering...' : 'Trigger Build'}
+            {triggering ? 'Triggering...' : 'Run Pipeline'}
           </button>
         </div>
+        <p className="text-[10px] text-gray-400">
+          Sync and list show builds for <span className="font-medium text-gray-600">{pipeline}</span> only.
+        </p>
       </div>
 
       {/* Build List */}
@@ -1257,26 +1460,41 @@ function BuildsPage() {
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-indigo-500" />
         </div>
-      ) : builds.length === 0 ? (
+      ) : filteredBuilds.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-xs text-gray-500">No builds yet. Trigger your first build!</p>
+          <p className="text-xs text-gray-500">
+            {builds.length === 0 ? 'No builds yet. Trigger your first build!' : `No ${statusFilter} builds.`}
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
-          {builds.map((build) => (
+          {filteredBuilds.map((build) => {
+            const duration = fmtDuration(build.started_at, build.finished_at);
+            const branch = (build.branch || 'main').replace(/^refs\/remotes\/origin\//, '').replace(/^origin\//, '');
+            return (
             <div key={build.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <button
                 onClick={() => setExpandedId(expandedId === build.id ? null : build.id)}
                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors rounded-lg"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusColors(build.status)}`} />
-                  <div className="text-left">
-                    <span className="text-sm text-gray-800 font-medium">Build #{build.build_number}</span>
-                    <span className="text-xs text-gray-400 ml-2">{build.branch}</span>
+                  <div className="text-left min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm text-gray-800 font-medium">Build #{build.build_number}</span>
+                      <span className="text-xs text-gray-400">
+                        {build.jenkins_job || 'DevFlow-Pipeline'} · {branch}
+                      </span>
+                      {duration && (
+                        <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">⏱ {duration}</span>
+                      )}
+                    </div>
+                    {build.commit_message && (
+                      <p className="text-[11px] text-gray-400 mt-0.5 truncate max-w-xs">{build.commit_message}</p>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${badgeColors(build.status)}`}>
                     {build.status}
                   </span>
@@ -1286,23 +1504,22 @@ function BuildsPage() {
 
               {expandedId === build.id && (
                 <div className="px-4 pb-4 space-y-2 border-t border-gray-200 pt-3">
-                  {build.commit_message && (
-                    <p className="text-xs text-gray-500">{build.commit_message}</p>
-                  )}
                   {build.logs && (
-                    <div className="bg-gray-100 rounded-lg p-3 font-mono text-[11px] text-gray-600 overflow-x-auto max-h-48 overflow-y-auto">
+                    <div className="bg-gray-950 rounded-lg p-3 font-mono text-[11px] text-emerald-400 overflow-x-auto max-h-56 overflow-y-auto">
                       <pre className="whitespace-pre-wrap">{build.logs}</pre>
                     </div>
                   )}
-                  <div className="flex items-center gap-4 text-[10px] text-gray-400">
-                    {build.triggered_username && <span>By: {build.triggered_username}</span>}
-                    {build.started_at && <span>Start: {new Date(build.started_at).toLocaleString()}</span>}
-                    {build.finished_at && <span>End: {new Date(build.finished_at).toLocaleString()}</span>}
+                  <div className="flex items-center flex-wrap gap-4 text-[10px] text-gray-400">
+                    {build.triggered_username && <span>👤 {build.triggered_username}</span>}
+                    {build.started_at && <span>▶ {new Date(build.started_at).toLocaleString()}</span>}
+                    {build.finished_at && <span>■ {new Date(build.finished_at).toLocaleString()}</span>}
+                    {duration && <span className="font-medium text-gray-500">Duration: {duration}</span>}
                   </div>
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -1315,8 +1532,7 @@ export default function App() {
   const [page, setPage] = useState('dashboard');
 
   useEffect(() => {
-    const token = localStorage.getItem('devflow_token');
-    if (token) {
+    if (api.token) {
       api.getMe().then((data) => setUser(data.user)).catch(() => api.setToken(null));
     }
   }, []);
