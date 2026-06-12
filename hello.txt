@@ -1,0 +1,2 @@
+Hello from Antigravity! This is a dummy test file to verify that Jenkins SCM polling automatically triggers a new pipeline build when changes are pushed to GitHub.
+Time of creation: 2026-06-12 11:10 AM
