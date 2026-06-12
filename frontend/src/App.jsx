@@ -119,19 +119,19 @@ function LoginPage({ onLogin }) {
             </div>
 
             {isRegister && (
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5" htmlFor="email">Email</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
-                placeholder="Enter email"
-                required
-              />
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5" htmlFor="email">Email</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  placeholder="Enter email"
+                  required
+                />
               </div>
             )}
 
@@ -181,7 +181,8 @@ function LoginPage({ onLogin }) {
 }
 
 // ─── Navbar ──────────────────────────────────────────────────────
-function Navbar({ user, onLogout, activePage, onNavigate }) {
+// DARK MODE: added darkMode + onToggleDark props
+function Navbar({ user, onLogout, activePage, onNavigate, darkMode, onToggleDark }) {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Icons.dashboard },
     { id: 'board', label: 'Board', icon: Icons.board },
@@ -205,11 +206,10 @@ function Navbar({ user, onLogout, activePage, onNavigate }) {
                 <button
                   key={tab.id}
                   onClick={() => onNavigate(tab.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    activePage === tab.id
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${activePage === tab.id
                       ? 'bg-gray-100 text-gray-900'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <tab.icon />
                   {tab.label}
@@ -219,6 +219,14 @@ function Navbar({ user, onLogout, activePage, onNavigate }) {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* DARK MODE TOGGLE BUTTON */}
+            <button
+              onClick={onToggleDark}
+              className="px-2 py-1.5 text-xs rounded-md border border-gray-200 hover:bg-gray-100 transition-colors"
+              title="Toggle dark mode"
+            >
+              {darkMode ? '☀️ Light' : '🌙 Dark'}
+            </button>
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 text-[10px] font-medium">
                 {user?.username?.charAt(0).toUpperCase()}
@@ -313,16 +321,16 @@ function DashboardPage({ onNavigate }) {
   const branches = stats?.byBranch?.length
     ? stats.byBranch
     : (() => {
-        const m = {};
-        builds.forEach(b => {
-          const br = (b.branch || 'main').replace(/^refs\/remotes\/origin\//, '').replace(/^origin\//, '');
-          if (!m[br]) m[br] = { branch: br, total: 0, success: 0, failed: 0 };
-          m[br].total++;
-          if (b.status === 'success') m[br].success++;
-          if (b.status === 'failed') m[br].failed++;
-        });
-        return Object.values(m);
-      })();
+      const m = {};
+      builds.forEach(b => {
+        const br = (b.branch || 'main').replace(/^refs\/remotes\/origin\//, '').replace(/^origin\//, '');
+        if (!m[br]) m[br] = { branch: br, total: 0, success: 0, failed: 0 };
+        m[br].total++;
+        if (b.status === 'success') m[br].success++;
+        if (b.status === 'failed') m[br].failed++;
+      });
+      return Object.values(m);
+    })();
 
   // Build activity feed - combine builds and tasks chronologically
   const buildItems = builds.map(b => ({
@@ -465,8 +473,8 @@ function DashboardPage({ onNavigate }) {
               <p className="text-xs text-gray-500">{card.label}</p>
               <span className="text-gray-400 opacity-50">
                 {card.icon === 'builds' ? <Icons.builds /> :
-                 card.icon === 'board' ? <Icons.board /> :
-                 card.icon === 'play' ? <Icons.play /> : <Icons.logo />}
+                  card.icon === 'board' ? <Icons.board /> :
+                    card.icon === 'play' ? <Icons.play /> : <Icons.logo />}
               </span>
             </div>
             <p className={`text-2xl font-semibold mt-1 ${card.accent}`}>{card.value}</p>
@@ -491,11 +499,11 @@ function DashboardPage({ onNavigate }) {
               {(jenkinsStatus.jobs || []).map((job) => {
                 const result = job.lastBuildResult;
                 const dot = result === 'SUCCESS' ? 'bg-emerald-500' :
-                             result === 'FAILURE' ? 'bg-red-500' :
-                             result === 'ABORTED' ? 'bg-gray-400' : 'bg-amber-400';
+                  result === 'FAILURE' ? 'bg-red-500' :
+                    result === 'ABORTED' ? 'bg-gray-400' : 'bg-amber-400';
                 const label = result === 'SUCCESS' ? 'passed' :
-                               result === 'FAILURE' ? 'failed' :
-                               result === 'ABORTED' ? 'aborted' : 'unknown';
+                  result === 'FAILURE' ? 'failed' :
+                    result === 'ABORTED' ? 'aborted' : 'unknown';
                 return (
                   <span key={job.name} className="flex items-center gap-1.5 text-[11px] text-gray-600 bg-gray-50 border border-gray-200 rounded px-2 py-0.5">
                     <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
@@ -635,12 +643,11 @@ function DashboardPage({ onNavigate }) {
                 <div key={t.id} className="flex items-center gap-2.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 hover:border-gray-300 transition-colors">
                   <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDot(t.status)}`} />
                   <span className="text-xs text-gray-700 truncate flex-1">{t.title}</span>
-                  <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${
-                    t.priority === 'critical' ? 'bg-red-50 text-red-700' :
-                    t.priority === 'high' ? 'bg-orange-50 text-orange-700' :
-                    t.priority === 'medium' ? 'bg-amber-50 text-amber-700' :
-                    'bg-gray-100 text-gray-500'
-                  }`}>
+                  <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${t.priority === 'critical' ? 'bg-red-50 text-red-700' :
+                      t.priority === 'high' ? 'bg-orange-50 text-orange-700' :
+                        t.priority === 'medium' ? 'bg-amber-50 text-amber-700' :
+                          'bg-gray-100 text-gray-500'
+                    }`}>
                     {t.priority}
                   </span>
                 </div>
@@ -659,11 +666,10 @@ function DashboardPage({ onNavigate }) {
               {activity.map((item, idx) => (
                 <div key={item.id} className="flex gap-2.5">
                   <div className="flex flex-col items-center">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 ring-2 ring-gray-200 ${
-                      item.type === 'build'
+                    <div className={`w-2 h-2 rounded-full mt-1.5 ring-2 ring-gray-200 ${item.type === 'build'
                         ? item.status === 'success' ? 'bg-emerald-500' : item.status === 'failed' ? 'bg-red-500' : item.status === 'running' ? 'bg-amber-500' : 'bg-gray-400'
                         : item.status === 'done' ? 'bg-emerald-500' : item.status === 'in_progress' ? 'bg-blue-500' : 'bg-gray-400'
-                    }`} />
+                      }`} />
                     {idx < activity.length - 1 && <div className="w-px flex-1 bg-gray-200 my-0.5" />}
                   </div>
                   <div className="pb-3 flex-1 min-w-0">
@@ -921,9 +927,8 @@ function BoardColumn({ column, tasks, onOpenTask, onAddTask }) {
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`flex-1 px-3 py-2 space-y-2 overflow-y-auto min-h-[120px] transition-colors ${
-              snapshot.isDraggingOver ? 'bg-indigo-50/60' : ''
-            }`}
+            className={`flex-1 px-3 py-2 space-y-2 overflow-y-auto min-h-[120px] transition-colors ${snapshot.isDraggingOver ? 'bg-indigo-50/60' : ''
+              }`}
           >
             {tasks.map((task, index) => (
               <TaskCard key={task.id} task={task} index={index} onClick={() => onOpenTask(task)} />
@@ -947,11 +952,10 @@ function TaskCard({ task, index, onClick }) {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={onClick}
-          className={`bg-white border border-gray-200 rounded-lg p-3 cursor-pointer group transition-all ${
-            snapshot.isDragging
+          className={`bg-white border border-gray-200 rounded-lg p-3 cursor-pointer group transition-all ${snapshot.isDragging
               ? 'shadow-lg border-indigo-400 rotate-[3deg] scale-[1.02]'
               : 'hover:border-gray-300 hover:shadow-sm'
-          }`}
+            }`}
         >
           <div className="flex items-start justify-between gap-2">
             <p className="text-xs text-gray-800 leading-relaxed break-words flex-1">{task.title}</p>
@@ -1029,10 +1033,10 @@ function BoardPage({ onNavigate }) {
           setPipelineNotice((prev) =>
             prev
               ? {
-                  ...prev,
-                  title: `Build #${msg.data.build_number} ${msg.data.status}`,
-                  detail: `Pipeline finished on ${msg.data.branch}. Open Builds for logs.`,
-                }
+                ...prev,
+                title: `Build #${msg.data.build_number} ${msg.data.status}`,
+                detail: `Pipeline finished on ${msg.data.branch}. Open Builds for logs.`,
+              }
               : prev
           );
         }
@@ -1208,7 +1212,7 @@ function BuildsPage() {
           setPipeline(data.defaultJob);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -1243,7 +1247,7 @@ function BuildsPage() {
         }
       };
       ws.onclose = () => setWsConnected(false);
-    } catch {}
+    } catch { }
     return () => ws?.close();
   };
 
@@ -1367,15 +1371,13 @@ function BuildsPage() {
 
       {/* Jenkins job status for current pipeline */}
       {jenkinsJobStatus && (
-        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs ${
-          jenkinsJobStatus.lastBuildResult === 'SUCCESS' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-          jenkinsJobStatus.lastBuildResult === 'FAILURE' ? 'bg-red-50 border-red-200 text-red-800' :
-          'bg-gray-50 border-gray-200 text-gray-600'
-        }`}>
-          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-            jenkinsJobStatus.lastBuildResult === 'SUCCESS' ? 'bg-emerald-500' :
-            jenkinsJobStatus.lastBuildResult === 'FAILURE' ? 'bg-red-500' : 'bg-gray-400'
-          }`} />
+        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs ${jenkinsJobStatus.lastBuildResult === 'SUCCESS' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+            jenkinsJobStatus.lastBuildResult === 'FAILURE' ? 'bg-red-50 border-red-200 text-red-800' :
+              'bg-gray-50 border-gray-200 text-gray-600'
+          }`}>
+          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${jenkinsJobStatus.lastBuildResult === 'SUCCESS' ? 'bg-emerald-500' :
+              jenkinsJobStatus.lastBuildResult === 'FAILURE' ? 'bg-red-500' : 'bg-gray-400'
+            }`} />
           <span className="font-medium">{pipeline}</span>
           {jenkinsJobStatus.lastBuildNumber && (
             <span>· Last build #{jenkinsJobStatus.lastBuildNumber} — {jenkinsJobStatus.lastBuildResult || 'UNKNOWN'}</span>
@@ -1390,31 +1392,28 @@ function BuildsPage() {
 
       {/* Status filter tabs */}
       <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-fit shadow-sm">
-        {[['all','All'],['running','Running'],['success','Passed'],['failed','Failed']].map(([val, label]) => (
+        {[['all', 'All'], ['running', 'Running'], ['success', 'Passed'], ['failed', 'Failed']].map(([val, label]) => (
           <button
             key={val}
             onClick={() => setStatusFilter(val)}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors ${
-              statusFilter === val
+            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors ${statusFilter === val
                 ? 'bg-gray-900 text-white'
                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-            }`}
+              }`}
           >
             {label}
-            <span className={`text-[10px] px-1 py-0.5 rounded ${
-              statusFilter === val ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
-            }`}>{statusCounts[val]}</span>
+            <span className={`text-[10px] px-1 py-0.5 rounded ${statusFilter === val ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+              }`}>{statusCounts[val]}</span>
           </button>
         ))}
       </div>
 
       {/* Sync status message */}
       {syncMessage && (
-        <div className={`px-4 py-2.5 rounded-lg text-xs font-medium border ${
-          syncMessage.toLowerCase().includes('fail') || syncMessage.toLowerCase().includes('error')
+        <div className={`px-4 py-2.5 rounded-lg text-xs font-medium border ${syncMessage.toLowerCase().includes('fail') || syncMessage.toLowerCase().includes('error')
             ? 'bg-red-50 text-red-700 border-red-200'
             : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-        }`}>
+          }`}>
           {syncMessage}
         </div>
       )}
@@ -1473,52 +1472,52 @@ function BuildsPage() {
             const duration = fmtDuration(build.started_at, build.finished_at);
             const branch = (build.branch || 'main').replace(/^refs\/remotes\/origin\//, '').replace(/^origin\//, '');
             return (
-            <div key={build.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <button
-                onClick={() => setExpandedId(expandedId === build.id ? null : build.id)}
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors rounded-lg"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusColors(build.status)}`} />
-                  <div className="text-left min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm text-gray-800 font-medium">Build #{build.build_number}</span>
-                      <span className="text-xs text-gray-400">
-                        {build.jenkins_job || 'DevFlow-Pipeline'} · {branch}
-                      </span>
-                      {duration && (
-                        <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">⏱ {duration}</span>
+              <div key={build.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <button
+                  onClick={() => setExpandedId(expandedId === build.id ? null : build.id)}
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors rounded-lg"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusColors(build.status)}`} />
+                    <div className="text-left min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm text-gray-800 font-medium">Build #{build.build_number}</span>
+                        <span className="text-xs text-gray-400">
+                          {build.jenkins_job || 'DevFlow-Pipeline'} · {branch}
+                        </span>
+                        {duration && (
+                          <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">⏱ {duration}</span>
+                        )}
+                      </div>
+                      {build.commit_message && (
+                        <p className="text-[11px] text-gray-400 mt-0.5 truncate max-w-xs">{build.commit_message}</p>
                       )}
                     </div>
-                    {build.commit_message && (
-                      <p className="text-[11px] text-gray-400 mt-0.5 truncate max-w-xs">{build.commit_message}</p>
-                    )}
                   </div>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${badgeColors(build.status)}`}>
-                    {build.status}
-                  </span>
-                  <Icons.chevronDown />
-                </div>
-              </button>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${badgeColors(build.status)}`}>
+                      {build.status}
+                    </span>
+                    <Icons.chevronDown />
+                  </div>
+                </button>
 
-              {expandedId === build.id && (
-                <div className="px-4 pb-4 space-y-2 border-t border-gray-200 pt-3">
-                  {build.logs && (
-                    <div className="bg-gray-950 rounded-lg p-3 font-mono text-[11px] text-emerald-400 overflow-x-auto max-h-56 overflow-y-auto">
-                      <pre className="whitespace-pre-wrap">{build.logs}</pre>
+                {expandedId === build.id && (
+                  <div className="px-4 pb-4 space-y-2 border-t border-gray-200 pt-3">
+                    {build.logs && (
+                      <div className="bg-gray-950 rounded-lg p-3 font-mono text-[11px] text-emerald-400 overflow-x-auto max-h-56 overflow-y-auto">
+                        <pre className="whitespace-pre-wrap">{build.logs}</pre>
+                      </div>
+                    )}
+                    <div className="flex items-center flex-wrap gap-4 text-[10px] text-gray-400">
+                      {build.triggered_username && <span>👤 {build.triggered_username}</span>}
+                      {build.started_at && <span>▶ {new Date(build.started_at).toLocaleString()}</span>}
+                      {build.finished_at && <span>■ {new Date(build.finished_at).toLocaleString()}</span>}
+                      {duration && <span className="font-medium text-gray-500">Duration: {duration}</span>}
                     </div>
-                  )}
-                  <div className="flex items-center flex-wrap gap-4 text-[10px] text-gray-400">
-                    {build.triggered_username && <span>👤 {build.triggered_username}</span>}
-                    {build.started_at && <span>▶ {new Date(build.started_at).toLocaleString()}</span>}
-                    {build.finished_at && <span>■ {new Date(build.finished_at).toLocaleString()}</span>}
-                    {duration && <span className="font-medium text-gray-500">Duration: {duration}</span>}
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -1531,6 +1530,8 @@ function BuildsPage() {
 export default function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState('dashboard');
+  // DARK MODE STATE
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     if (api.token) {
@@ -1544,8 +1545,10 @@ export default function App() {
   if (!user) return <LoginPage onLogin={handleLogin} />;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar user={user} onLogout={handleLogout} activePage={page} onNavigate={setPage} />
+    {/* DARK MODE: className switches bg based on darkMode state */}
+    <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      {/* DARK MODE: passing darkMode + onToggleDark to Navbar */}
+      <Navbar user={user} onLogout={handleLogout} activePage={page} onNavigate={setPage} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 min-h-0">
         {page === 'dashboard' && <DashboardPage onNavigate={setPage} />}
         {page === 'board' && <BoardPage onNavigate={setPage} />}
