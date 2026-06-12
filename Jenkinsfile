@@ -80,14 +80,16 @@ pipeline {
         stage('Code Quality (SonarQube)') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    bat '''
-                        sonar-scanner ^
-                        -Dsonar.projectKey=devflow ^
-                        -Dsonar.projectName="DevFlow" ^
-                        -Dsonar.sources=backend,frontend/src ^
-                        -Dsonar.host.url=http://localhost:9000 ^
-                        -Dsonar.login=admin
-                    '''
+                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                        bat """
+                            C:\\Users\\Manjunath\\sonar-scanner\\bin\\sonar-scanner.bat ^
+                            -Dsonar.projectKey=devflow ^
+                            -Dsonar.projectName=DevFlow ^
+                            -Dsonar.sources=backend,frontend/src ^
+                            -Dsonar.host.url=http://localhost:9000 ^
+                            -Dsonar.token=%SONAR_TOKEN%
+                        """
+                    }
                 }
             }
         }
