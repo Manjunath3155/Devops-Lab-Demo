@@ -180,10 +180,9 @@ function LoginPage({ onLogin }) {
   );
 }
 
-// ─── Navbar ──────────────────────────────────────────────────────
-// DARK MODE: added darkMode + onToggleDark props
-// OLD: function Navbar({ user, onLogout, activePage, onNavigate }) {
-function Navbar({ user, onLogout, activePage, onNavigate, darkMode, onToggleDark }) {
+// ─── DARK MODE FEATURE: uncomment the line below and comment the original to enable ───
+// function Navbar({ user, onLogout, activePage, onNavigate, darkMode, onToggleDark }) {
+function Navbar({ user, onLogout, activePage, onNavigate }) {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Icons.dashboard },
     { id: 'board', label: 'Board', icon: Icons.board },
@@ -220,14 +219,14 @@ function Navbar({ user, onLogout, activePage, onNavigate, darkMode, onToggleDark
           </div>
 
           <div className="flex items-center gap-3">
-            {/* DARK MODE TOGGLE BUTTON */}
-            <button
-              onClick={onToggleDark}
-              className="px-2 py-1.5 text-xs rounded-md border border-gray-200 hover:bg-gray-100 transition-colors"
-              title="Toggle dark mode"
-            >
-              {darkMode ? '☀️ Light' : '🌙 Dark'}
-            </button>
+          {/* DARK MODE TOGGLE BUTTON: uncomment below to enable */}
+          {/* <button
+            onClick={onToggleDark}
+            className="px-2 py-1.5 text-xs rounded-md border border-gray-200 hover:bg-gray-100 transition-colors"
+            title="Toggle dark mode"
+          >
+            {darkMode ? '☀️ Light' : '🌙 Dark'}
+          </button> */}
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 text-[10px] font-medium">
                 {user?.username?.charAt(0).toUpperCase()}
@@ -1531,9 +1530,8 @@ function BuildsPage() {
 export default function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState('dashboard');
-  // DARK MODE STATE (new)
-  // OLD: no darkMode state here
-  const [darkMode, setDarkMode] = useState(false);
+  // DARK MODE STATE: uncomment below to enable
+  // const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     if (api.token) {
@@ -1547,12 +1545,12 @@ export default function App() {
   if (!user) return <LoginPage onLogin={handleLogin} />;
 
   return (
-    {/* DARK MODE: className switches bg based on darkMode state */}
-    {/* OLD: <div className="min-h-screen bg-gray-50 flex flex-col"> */}
-    <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-      {/* DARK MODE: passing darkMode + onToggleDark to Navbar */}
-      {/* OLD: <Navbar user={user} onLogout={handleLogout} activePage={page} onNavigate={setPage} /> */}
-      <Navbar user={user} onLogout={handleLogout} activePage={page} onNavigate={setPage} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />
+    {/* DARK MODE: uncomment below and comment original <div> to enable */}
+    {/* <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}> */}
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* DARK MODE: uncomment below and comment original <Navbar> to enable */}
+      {/* <Navbar user={user} onLogout={handleLogout} activePage={page} onNavigate={setPage} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} /> */}
+      <Navbar user={user} onLogout={handleLogout} activePage={page} onNavigate={setPage} />
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 min-h-0">
         {page === 'dashboard' && <DashboardPage onNavigate={setPage} />}
         {page === 'board' && <BoardPage onNavigate={setPage} />}
