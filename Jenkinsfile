@@ -80,16 +80,14 @@ pipeline {
         stage('Code Quality (SonarQube)') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    withSonarQubeEnv('SonarQube') {
-                        bat '''
-                            sonar-scanner ^
-                            -Dsonar.projectKey=devflow ^
-                            -Dsonar.projectName="DevFlow" ^
-                            -Dsonar.sources=backend,frontend/src ^
-                            -Dsonar.host.url=http://localhost:9000 ^
-                            -Dsonar.login=admin
-                        '''
-                    }
+                    bat '''
+                        sonar-scanner ^
+                        -Dsonar.projectKey=devflow ^
+                        -Dsonar.projectName="DevFlow" ^
+                        -Dsonar.sources=backend,frontend/src ^
+                        -Dsonar.host.url=http://localhost:9000 ^
+                        -Dsonar.login=admin
+                    '''
                 }
             }
         }
@@ -131,8 +129,12 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    echo 'Starting DevFlow containers...'
-                    bat "${DOCKER_CMD} compose up -d --force-recreate"
+                    echo 'Deploying DevFlow from project directory...'
+                    // Run compose from the actual project folder so we reuse
+                    // existing devopslabdemo containers (avoids port conflicts)
+                    dir('C:/Users/Manjunath/OneDrive/Desktop/CODE/Devops lab demo') {
+                        bat "${DOCKER_CMD} compose up -d --force-recreate"
+                    }
                     echo 'DevFlow is running at http://localhost'
                 }
             }
