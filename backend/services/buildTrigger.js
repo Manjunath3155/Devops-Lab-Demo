@@ -1,37 +1,9 @@
 const db = require('../database');
+const { getJenkinsConfig, triggerJenkinsJob } = require('./jenkins');
 
-function getJenkinsConfig() {
-  return {
-    url: (process.env.JENKINS_URL || 'http://host.docker.internal:8080').replace(/\/$/, ''),
-    jobName: process.env.JENKINS_JOB_NAME || 'Devops-Lab-Demo',
-    user: process.env.JENKINS_USER || 'manjunathpatil',
-    token: process.env.JENKINS_TOKEN || process.env.JENKINS_PASSWORD || 'Manjunath1234',
-  };
-}
-
-async function tryTriggerJenkins() {
-  const { url, jobName, user, token } = getJenkinsConfig();
-  const authHeaders = {
-    Authorization: `Basic ${Buffer.from(`${user}:${token}`).toString('base64')}`,
-  };
-
-  try {
-    const crumbRes = await fetch(`${url}/crumbIssuer/api/json`, { headers: authHeaders });
-    if (crumbRes.ok) {
-      const crumb = await crumbRes.json();
-      authHeaders['Jenkins-Crumb'] = crumb.crumb;
-    }
-
-    const buildRes = await fetch(`${url}/job/${encodeURIComponent(jobName)}/build`, {
-      method: 'POST',
-      headers: authHeaders,
-    });
-
-    return buildRes.ok || buildRes.status === 201;
-  } catch (err) {
-    console.warn('[buildTrigger] Jenkins trigger failed:', err.message);
-    return false;
-  }
+async function tryTriggerJenkins(jobName) {
+  const name = jobName || getJenkinsConfig().defaultJob;
+  return triggerJenkinsJob(name);
 }
 
 function simulateBuildCompletion(build, buildNumber, branch, commitMessage) {
@@ -69,12 +41,16 @@ function shouldTriggerPipeline(oldStatus, newStatus) {
   return getPipelineForStatus(newStatus) !== null;
 }
 
-function startBuild(userId, { branch, commitSha, commitMessage, triggerJenkins, action }) {
-  const lastBuild = db.prepare('SELECT MAX(build_number) as max_num FROM builds').get();
-  const buildNumber = (lastBuild.max_num || 0) + 1;
+function startBuild(userId, { branch, commitSha, commitMessage, triggerJenkins, action, jenkinsJob }) {
+  const jobName = jenkinsJob || getJenkinsConfig().defaultJob;
+  const lastBuild = db.prepare(
+    `SELECT MAX(build_number) as max_num FROM builds
+     WHERE COALESCE(jenkins_job, 'DevFlow-Pipeline') = ?`
+  ).get(jobName);
+  const buildNumber = (lastBuild?.max_num || 0) + 1;
 
   const result = db.prepare(
-    'INSERT INTO builds (build_number, branch, commit_sha, commit_message, status, triggered_by, started_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO builds (build_number, branch, commit_sha, commit_message, status, triggered_by, started_at, jenkins_job) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   ).run(
     buildNumber,
     branch,
@@ -82,7 +58,8 @@ function startBuild(userId, { branch, commitSha, commitMessage, triggerJenkins, 
     commitMessage,
     'running',
     userId,
-    new Date().toISOString()
+    new Date().toISOString(),
+    jobName
   );
 
   const build = db.prepare('SELECT * FROM builds WHERE id = ?').get(result.lastInsertRowid);
@@ -94,8 +71,8 @@ function startBuild(userId, { branch, commitSha, commitMessage, triggerJenkins, 
   simulateBuildCompletion(build, buildNumber, branch, commitMessage);
 
   if (triggerJenkins) {
-    tryTriggerJenkins().then((ok) => {
-      if (ok) console.log(`[buildTrigger] Jenkins job queued (${action})`);
+    tryTriggerJenkins(jobName).then((ok) => {
+      if (ok) console.log(`[buildTrigger] Jenkins job queued: ${jobName} (${action})`);
     });
   }
 
@@ -103,6 +80,7 @@ function startBuild(userId, { branch, commitSha, commitMessage, triggerJenkins, 
     build,
     action,
     branch,
+    jenkinsJob: jobName,
     jenkinsQueued: !!triggerJenkins,
   };
 }
@@ -124,13 +102,15 @@ function triggerBuildForTask(userId, task) {
 }
 
 /** Manual build from the Builds page */
-function triggerManualBuild(userId, { branch, commit_sha, commit_message }) {
+function triggerManualBuild(userId, { branch, commit_sha, commit_message, jenkins_job, trigger_jenkins }) {
+  const jenkinsJob = jenkins_job || getJenkinsConfig().defaultJob;
   return startBuild(userId, {
     branch,
     commitSha: commit_sha || '',
     commitMessage: commit_message || 'Manual build trigger',
-    triggerJenkins: branch === 'main',
-    action: 'Manual pipeline',
+    triggerJenkins: trigger_jenkins !== false,
+    jenkinsJob,
+    action: `Manual pipeline (${jenkinsJob})`,
   });
 }
 

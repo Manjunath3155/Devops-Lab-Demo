@@ -55,4 +55,13 @@ db.exec(`
   );
 `);
 
+try {
+  const buildCols = db.prepare('PRAGMA table_info(builds)').all();
+  if (!buildCols.some((c) => c.name === 'jenkins_job')) {
+    db.exec(`ALTER TABLE builds ADD COLUMN jenkins_job TEXT DEFAULT 'Devops-Lab-Demo'`);
+  }
+} catch (err) {
+  console.warn('Could not migrate builds.jenkins_job:', err.message);
+}
+
 module.exports = db;
