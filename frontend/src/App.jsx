@@ -344,12 +344,12 @@ function DashboardPage({ onNavigate }) {
     status: t.status,
   }));
   const activity = [...buildItems, ...taskItems]
-    .sort((a, b) => b.timestamp - a.timestamp)
+    .sort((a, b) => (b.build_number ?? 0) - (a.build_number ?? 0) || b.timestamp - a.timestamp)
     .slice(0, 6);
 
-  // Recent items for direct display
+  // Recent items for direct display — sort by build_number so newest is always first
   const recentBuilds = [...builds]
-    .sort((a, b) => new Date(b.created_at || b.started_at || 0) - new Date(a.created_at || a.started_at || 0))
+    .sort((a, b) => (b.build_number ?? 0) - (a.build_number ?? 0))
     .slice(0, 4);
   const recentTasks = [...tasks]
     .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
@@ -1300,9 +1300,10 @@ function BuildsPage() {
     ...builds.map((b) => b.branch).filter(Boolean),
   ])];
 
-  const filteredBuilds = statusFilter === 'all'
-    ? builds
-    : builds.filter(b => b.status === statusFilter);
+  const filteredBuilds = (statusFilter === 'all'
+    ? [...builds]
+    : builds.filter(b => b.status === statusFilter)
+  ).sort((a, b) => (b.build_number ?? 0) - (a.build_number ?? 0));
 
   const statusCounts = {
     all: builds.length,
