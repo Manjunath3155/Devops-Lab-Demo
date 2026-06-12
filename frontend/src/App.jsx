@@ -1544,12 +1544,12 @@ export default function App() {
 
   if (!user) return <LoginPage onLogin={handleLogin} />;
 
+  // DARK MODE: to enable, replace the <div> below with:
+  // <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+  // and replace the <Navbar> below with:
+  // <Navbar user={user} onLogout={handleLogout} activePage={page} onNavigate={setPage} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />
   return (
-    {/* DARK MODE: uncomment below and comment original <div> to enable */}
-    {/* <div className={`min-h-screen flex flex-col ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}> */}
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* DARK MODE: uncomment below and comment original <Navbar> to enable */}
-      {/* <Navbar user={user} onLogout={handleLogout} activePage={page} onNavigate={setPage} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} /> */}
       <Navbar user={user} onLogout={handleLogout} activePage={page} onNavigate={setPage} />
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 min-h-0">
         {page === 'dashboard' && <DashboardPage onNavigate={setPage} />}
